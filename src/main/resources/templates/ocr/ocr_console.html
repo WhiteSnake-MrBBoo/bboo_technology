@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <!-- 반응형 레이아웃 필수 설정 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>문서 OCR & 번역 콘솔</title>
+
+    <!-- 파비콘 (필요 시 교체) -->
+    <link rel="icon" type="image/png" href="/images/favicon-ocr.png">
+
+    <!-- 구글 폰트: 본문 + 타이틀용 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@500;600&display=swap"
+            rel="stylesheet">
+
+    <!-- Bootstrap 5 (반응형 + 기본 그리드/컴포넌트) -->
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+            crossorigin="anonymous">
+
+    <!-- Font Awesome (아이콘용) -->
+    <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+            integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer" />
+
+    <!-- OCR 전용 커스텀 CSS (나중에 별도 파일에서 상세 디자인) -->
+    <link rel="stylesheet" href="/css/ocr-console.css">
+</head>
+
+<body class="bg-light" style="font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;">
+
+<!-- 전체 컨테이너 -->
+<div class="container-fluid py-4">
+
+    <!-- ===========================
+         1. 페이지 상단 헤더(타이틀 영역)
+         - 타이틀 / 설명 / 우측 버튼 영역
+         - 향후 히스토리, 도움말, 사이드바 토글 버튼 추가를 고려
+       =========================== -->
+    <header class="mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <!-- 왼쪽: 타이틀 + 설명 -->
+            <div>
+                <h1 class="h3 mb-1" style="font-family: 'Playfair Display', serif;">
+                    <i class="fa-solid fa-wand-magic-sparkles me-2"></i>
+                    문서 OCR & 번역 콘솔
+                </h1>
+                <p class="text-muted mb-0 small">
+                    이미지 · PDF에서 텍스트를 추출하고, 수정 · 번역 후 안전하게 저장할 수 있는 작업 콘솔입니다.
+                </p>
+            </div>
+
+            <!-- 오른쪽: 상단 버튼 / 향후 사이드바 토글 영역 -->
+            <div class="d-flex align-items-center gap-2">
+                <!-- 히스토리 버튼 (향후 구현 예정) -->
+                <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                    <i class="fa-regular fa-clock me-1"></i> OCR 히스토리 (준비 중)
+                </button>
+
+                <!-- 모바일에서 사이드바 열기 토글 (향후 사용) -->
+                <button type="button" class="btn btn-outline-primary btn-sm d-md-none" id="sidebarToggleBtn">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===========================
+         2. 메인 레이아웃
+         - 좌측: 사이드바(카테고리 영역 placeholder)
+         - 우측: OCR 콘솔 (다시 2분할: 업로드/미리보기 + OCR/번역 영역)
+       =========================== -->
+    <div class="row g-3">
+        <!-- 2-1. 카테고리 사이드바 영역 (현재는 Placeholder)
+             - PC에서는 왼쪽에 고정된 좁은 컬럼
+             - 모바일에서는 상단 토글 버튼으로 열리는 구조를 나중에 구현할 예정
+        -->
+        <aside class="col-12 col-md-2 col-lg-2">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body py-3">
+                    <h2 class="h6 mb-3">
+                        <i class="fa-solid fa-list-ul me-2"></i>카테고리
+                    </h2>
+
+                    <!--
+                      TODO:
+                      - 나중에 실제 카테고리 리스트(예: OCR, 번역, 로그, 설정 등)로 교체
+                      - 현재는 단순 placeholder 텍스트
+                    -->
+                    <ul class="list-unstyled small mb-0 text-muted">
+                        <li class="mb-1"><i class="fa-solid fa-circle-dot me-1 text-primary"></i>OCR 콘솔</li>
+                        <li class="mb-1"><i class="fa-regular fa-circle me-1"></i>번역 도구 (추가 예정)</li>
+                        <li class="mb-1"><i class="fa-regular fa-circle me-1"></i>히스토리 (추가 예정)</li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 2-2. OCR 작업 영역 (업로드 + 미리보기 + 텍스트/번역)
+             - col-12 col-md-10: 사이드바를 제외한 나머지 부분
+        -->
+        <main class="col-12 col-md-10 col-lg-10">
+            <div class="row g-3">
+
+                <!-- ===========================
+                     2-2-1. 왼쪽 패널: 파일 업로드 + 미리보기
+                   =========================== -->
+                <section class="col-12 col-lg-5">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body d-flex flex-column gap-3">
+                            <!-- 파일 업로드 폼 -->
+                            <!--
+                              NOTE:
+                              - th:action 은 나중에 OcrController 매핑과 맞춰서 수정
+                              - enctype="multipart/form-data" 는 파일 업로드에 필수
+                            -->
+                            <form
+                                    id="ocrUploadForm"
+                                    th:action="@{/ocr/upload}"
+                                    method="post"
+                                    enctype="multipart/form-data"
+                                    class="mb-2">
+
+                                <div class="mb-2">
+                                    <label for="fileInput" class="form-label fw-semibold small mb-1">
+                                        <i class="fa-solid fa-file-arrow-up me-1"></i>파일 선택
+                                    </label>
+                                    <input
+                                            class="form-control form-control-sm"
+                                            type="file"
+                                            id="fileInput"
+                                            name="file"
+                                            accept="image/*,application/pdf">
+                                    <div class="form-text small">
+                                        지원 형식: 이미지(JPG, PNG 등), PDF (멀티 페이지 포함)
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <div class="small text-muted">
+                                        <!-- 파일 선택 후 JS에서 이 영역에 파일명/타입 표시 -->
+                                        <span id="fileInfoText">선택된 파일이 없습니다.</span>
+                                    </div>
+                                    <!-- 업로드 & OCR 실행 버튼 -->
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="fa-solid fa-magic-wand-sparkles me-1"></i>OCR 실행
+                                    </button>
+                                </div>
+                            </form>
+
+                            <!-- 파일 관련 서버 메시지 (성공/에러) -->
+                            <!--
+                              NOTE:
+                              - 나중에 컨트롤러에서 model.addAttribute("errorMessage", "...") 등으로 내려주면 됨
+                            -->
+                            <div th:if="${errorMessage}" class="alert alert-danger py-2 small mb-0">
+                                <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                                <span th:text="${errorMessage}">에러 메시지</span>
+                            </div>
+                            <div th:if="${infoMessage}" class="alert alert-info py-2 small mb-0">
+                                <i class="fa-solid fa-circle-info me-1"></i>
+                                <span th:text="${infoMessage}">안내 메시지</span>
+                            </div>
+
+                            <hr class="my-2">
+
+                            <!-- 미리보기 영역 -->
+                            <div class="flex-grow-1 d-flex flex-column">
+                                <h3 class="h6 mb-2">
+                                    <i class="fa-regular fa-eye me-1"></i>파일 미리보기
+                                </h3>
+
+                                <!-- (중요) 이미지 / PDF 미리보기 타입 분기
+                                     - 동일한 DOM 안에서 JS로 show/hide 처리
+                                -->
+                                <div class="border rounded bg-white d-flex align-items-center justify-content-center position-relative overflow-hidden" style="min-height: 220px;">
+                                    <!-- 이미지 미리보기 -->
+                                    <img
+                                            id="imagePreview"
+                                            src=""
+                                            alt="이미지 미리보기"
+                                            class="img-fluid d-none"
+                                            style="max-height: 280px; object-fit: contain;">
+
+                                    <!-- PDF 미리보기 -->
+                                    <!--
+                                      NOTE:
+                                      - PDF는 브라우저 기본 뷰어를 활용 (여러 페이지 스크롤 가능)
+                                      - pdf.js 적용 시에는 이 영역 교체 가능
+                                    -->
+                                    <embed
+                                            id="pdfPreview"
+                                            type="application/pdf"
+                                            src=""
+                                            class="w-100 h-100 d-none"
+                                            style="min-height: 220px;">
+
+                                    <!-- 아무 파일도 없을 때 Placeholder -->
+                                    <div id="previewPlaceholder" class="text-muted text-center small px-3">
+                                        <i class="fa-regular fa-file-lines fa-2x mb-2 d-block"></i>
+                                        파일을 선택하면 여기에서 이미지 또는 PDF 미리보기를 확인할 수 있습니다.
+                                    </div>
+                                </div>
+
+                                <!-- PDF의 경우 페이지 수 표시 (백엔드에서 내려주는 값 사용 예정) -->
+                                <div class="mt-2 small text-muted" th:if="${ocrResult != null}">
+                                    <span th:if="${ocrResult.fileType == 'PDF'}">
+                                        <i class="fa-regular fa-file-pdf me-1"></i>
+                                        PDF 문서 ·
+                                        <span th:text="${ocrResult.pageCount}">0</span> 페이지
+                                    </span>
+                                    <span th:if="${ocrResult.fileType == 'IMAGE'}">
+                                        <i class="fa-regular fa-image me-1"></i>
+                                        이미지 파일
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===========================
+                     2-2-2. 오른쪽 패널: OCR 결과 + 제목 + 번역 UI
+                   =========================== -->
+                <section class="col-12 col-lg-7">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body d-flex flex-column gap-3">
+
+                            <!-- 상단: 현재 상태/파일 정보 간단 표시 -->
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="small text-muted">
+                                    <i class="fa-solid fa-circle-dot text-success me-1"></i>
+                                    <span th:if="${ocrResult != null}">
+                                        현재 작업 중 파일:
+                                        <strong th:text="${ocrResult.originalFileName}">sample.pdf</strong>
+                                    </span>
+                                    <span th:if="${ocrResult == null}">
+                                        현재 작업 중인 파일이 없습니다. 파일을 업로드하고 OCR을 실행하세요.
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- OCR 결과 저장 폼 -->
+                            <!--
+                              NOTE:
+                              - 제목 + OCR 텍스트(수정 가능)를 함께 서버로 전송
+                              - th:action 은 나중에 /ocr/save 엔드포인트와 맞춤
+                            -->
+                            <form
+                                    id="ocrSaveForm"
+                                    th:action="@{/ocr/save}"
+                                    method="post"
+                                    class="d-flex flex-column gap-3 flex-grow-1">
+
+                                <!-- 1) 저장할 제목 입력 -->
+                                <div>
+                                    <label for="ocrTitle" class="form-label fw-semibold small mb-1">
+                                        <i class="fa-regular fa-bookmark me-1"></i>저장할 제목
+                                    </label>
+                                    <input
+                                            type="text"
+                                            id="ocrTitle"
+                                            name="title"
+                                            class="form-control form-control-sm"
+                                            placeholder="이 OCR 결과를 구분할 수 있는 제목을 입력하세요."
+                                            th:value="${ocrResult != null} ? ${ocrResult.title} : ''">
+                                </div>
+
+                                <!-- 2) OCR 텍스트 (원본 + 수정본) -->
+                                <div class="flex-grow-1 d-flex flex-column">
+                                    <label for="ocrText" class="form-label fw-semibold small mb-1">
+                                        <i class="fa-solid fa-font me-1"></i>OCR 텍스트 (수정 가능)
+                                    </label>
+                                    <!--
+                                      NOTE:
+                                      - 서버에서 내려주는 ocrResult.ocrText 를 textarea에 뿌림
+                                      - 사용자가 수정한 내용은 저장 버튼 클릭 시 함께 전송
+                                    -->
+                                    <textarea
+                                            id="ocrText"
+                                            name="ocrText"
+                                            class="form-control"
+                                            rows="10"
+                                            placeholder="OCR 결과 텍스트가 여기에 표시됩니다. 오타, 줄바꿈 등을 자유롭게 수정한 뒤 저장할 수 있습니다."
+                                            th:text="${ocrResult != null} ? ${ocrResult.ocrText} : ''"></textarea>
+                                </div>
+
+                                <!-- 3) 번역 영역 (향후 번역 API 연동 시 활성화 예정) -->
+                                <div class="border rounded p-2 bg-light-subtle">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="fw-semibold small">
+                                            <i class="fa-solid fa-language me-1"></i>번역 (향후 API 연동 예정)
+                                        </div>
+                                        <!-- 번역 방향 선택 (UI만 먼저 준비) -->
+                                        <div class="d-flex align-items-center gap-1">
+                                            <select class="form-select form-select-sm" id="translateDirection" disabled>
+                                                <option value="EN_KO">영어 → 한국어</option>
+                                                <option value="KO_EN">한국어 → 영어</option>
+                                            </select>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                                                번역 실행
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <textarea
+                                            id="translatedText"
+                                            class="form-control form-control-sm"
+                                            rows="4"
+                                            placeholder="여기는 번역 결과가 표시될 영역입니다. 번역 API 연동 후 활성화될 예정입니다."
+                                            readonly></textarea>
+                                </div>
+
+                                <!-- 4) 저장 버튼 영역 -->
+                                <div class="d-flex justify-content-between align-items-center pt-1">
+                                    <div class="small text-muted">
+                                        <i class="fa-solid fa-circle-info me-1"></i>
+                                        제목과 텍스트를 확인한 뒤 <strong>저장</strong>을 누르면 DB에 기록됩니다.
+                                    </div>
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="fa-regular fa-floppy-disk me-1"></i>저장하기
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- ===========================
+     JS 영역
+     - Bootstrap JS
+     - 파일 미리보기 처리 스크립트
+   =========================== -->
+<script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-pW7jvBSrGq1oS01qmPvvrLpzjAU6YewsGmmKzB8MS+d5QwDFi1Cdm42HcpsTOyZw"
+        crossorigin="anonymous"></script>
+
+<script>
+    // (중요) 클라이언트에서 이미지 / PDF 미리보기 처리
+    // - 서버로 업로드하기 전에 사용자가 어떤 파일인지 눈으로 확인할 수 있게 하는 역할
+    // - 파일 타입에 따라 이미지 또는 PDF 영역만 보여주고 나머지는 숨김
+    const fileInput = document.getElementById('fileInput');
+    const fileInfoText = document.getElementById('fileInfoText');
+    const imagePreview = document.getElementById('imagePreview');
+    const pdfPreview = document.getElementById('pdfPreview');
+    const previewPlaceholder = document.getElementById('previewPlaceholder');
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function (event) {
+            const file = event.target.files && event.target.files[0];
+
+            if (!file) {
+                // 파일이 선택되지 않은 경우 초기 상태로 복귀
+                fileInfoText.textContent = '선택된 파일이 없습니다.';
+                imagePreview.classList.add('d-none');
+                pdfPreview.classList.add('d-none');
+                previewPlaceholder.classList.remove('d-none');
+                imagePreview.src = '';
+                pdfPreview.src = '';
+                return;
+            }
+
+            // 파일명 + 타입 간단 표기
+            fileInfoText.textContent = `${file.name} (${file.type || '알 수 없는 형식'})`;
+
+            // 브라우저에서 사용할 임시 URL 생성
+            const objectUrl = URL.createObjectURL(file);
+
+            // MIME 타입을 기준으로 간단 분기 (image/*, application/pdf)
+            if (file.type.startsWith('image/')) {
+                // 이미지 미리보기 활성화
+                imagePreview.src = objectUrl;
+                imagePreview.classList.remove('d-none');
+
+                // PDF는 숨김
+                pdfPreview.src = '';
+                pdfPreview.classList.add('d-none');
+            } else if (file.type === 'application/pdf') {
+                // PDF 미리보기 활성화 (브라우저 기본 PDF 뷰어)
+                pdfPreview.src = objectUrl;
+                pdfPreview.classList.remove('d-none');
+
+                // 이미지는 숨김
+                imagePreview.src = '';
+                imagePreview.classList.add('d-none');
+            } else {
+                // 지원하지 않는 포맷이면 둘 다 숨기고 안내 문구만 유지
+                imagePreview.src = '';
+                pdfPreview.src = '';
+                imagePreview.classList.add('d-none');
+                pdfPreview.classList.add('d-none');
+            }
+
+            // 어떤 경우든 파일이 선택되면 placeholder는 숨김
+            previewPlaceholder.classList.add('d-none');
+        });
+    }
+
+    // (향후용) 모바일에서 사이드바 토글 버튼 클릭 시 동작
+    // - 현재는 구현하지 않고, 나중에 offcanvas 또는 slide-in 사이드바 구현 시 활용
+    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+    if (sidebarToggleBtn) {
+        sidebarToggleBtn.addEventListener('click', function () {
+            // TODO: 모바일에서 사이드바를 열고 닫는 로직 추가 예정
+            alert('사이드바 토글은 향후 구현 예정입니다.');
+        });
+    }
+</script>
+
+</body>
+</html>
