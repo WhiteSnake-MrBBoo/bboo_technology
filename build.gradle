@@ -32,6 +32,9 @@ dependencies {
     //OCR 의존성 주입 - 이미지를 텍스트로 변환
     implementation 'net.sourceforge.tess4j:tess4j:5.13.0'
 
+    // PDF → 이미지 변환용 (멀티 페이지 OCR에 필요)
+    implementation 'org.apache.pdfbox:pdfbox:2.0.31'
+
     //웹소켓 의존성 주입 - version:web:3.5.7
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
