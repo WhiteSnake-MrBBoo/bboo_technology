@@ -1,4 +1,4 @@
-package com.example.bboo_technology.Service;
+package com.example.bboo_technology.Service.Ocrservice;
 
 /**
  * OCR 처리 중 발생하는 예외를 감싸는 RuntimeException.

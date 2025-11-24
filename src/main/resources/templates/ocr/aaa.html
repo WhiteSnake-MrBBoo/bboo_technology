@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>문서 OCR & 번역 콘솔</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: #1e293b;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 헤더 스타일 */
+        .header-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-subtitle {
+            color: #64748b;
+            font-size: 0.95rem;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        /* 메인 레이아웃 */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 380px 1fr;
+            }
+        }
+
+        /* 사이드바 */
+        .sidebar-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            height: fit-content;
+            position: sticky;
+            top: 2rem;
+        }
+
+        .sidebar-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sidebar-title i {
+            color: #3b82f6;
+        }
+
+        .sidebar-list {
+            list-style: none;
+        }
+
+        .sidebar-item {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .sidebar-item:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            color: #3b82f6;
+            transform: translateX(4px);
+        }
+
+        .sidebar-item.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .sidebar-item i {
+            margin-right: 0.75rem;
+            width: 16px;
+        }
+
+        /* 메인 컨텐츠 */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 1024px) {
+            .content-grid {
+                grid-template-columns: 1fr 1.2fr;
+            }
+        }
+
+        /* 카드 공통 스타일 */
+        .card-premium {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100%;
+        }
+
+        .card-premium:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card-title i {
+            color: #3b82f6;
+        }
+
+        /* 파일 업로드 영역 */
+        .upload-zone {
+            border: 2px dashed rgba(59, 130, 246, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .upload-zone:hover {
+            border-color: #3b82f6;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+        }
+
+        .upload-zone:hover::before {
+            left: 100%;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #3b82f6;
+            margin-bottom: 1rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .upload-text {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin: 0.5rem 0;
+        }
+
+        .upload-text strong {
+            color: #3b82f6;
+        }
+
+        /* 미리보기 */
+        .preview-area {
+            border-radius: 16px;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+            padding: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 280px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .preview-placeholder {
+            text-align: center;
+            color: #94a3b8;
+        }
+
+        .preview-placeholder i {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #cbd5e1;
+        }
+
+        .preview-img {
+            max-height: 280px;
+            object-fit: contain;
+            border-radius: 12px;
+        }
+
+        /* 폼 요소 */
+        .form-label {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            outline: none;
+        }
+
+        .form-control::placeholder {
+            color: #cbd5e1;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        /* 버튼 */
+        .btn-primary-glow {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            position: relative;
+            overflow: hidden;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary-glow::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-primary-glow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-primary-glow:hover::before {
+            left: 100%;
+        }
+
+        .btn-success-glow {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            font-size: 0.9rem;
+        }
+
+        .btn-success-glow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        /* 섹션 구분 */
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+            margin: 1.5rem 0;
+        }
+
+        /* 정보 배너 */
+        .info-banner {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+            border-left: 4px solid #3b82f6;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+            color: #475569;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .info-banner i {
+            color: #3b82f6;
+            margin-top: 0.25rem;
+            flex-shrink: 0;
+        }
+
+        /* 번역 영역 */
+        .translate-section {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .translate-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .translate-title {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .translate-controls {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* 상태 표시 */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(10, 174, 120, 0.05) 100%);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #059669;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* 반응형 */
+        @media (max-width: 1024px) {
+            .header-section {
+                padding: 2rem;
+            }
+
+            .header-title {
+                font-size: 2rem;
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar-card {
+                position: static;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-section {
+                padding: 1.5rem;
+            }
+
+            .header-title {
+                font-size: 1.75rem;
+            }
+
+            .card-premium {
+                padding: 1.5rem;
+            }
+
+            .translate-controls {
+                width: 100%;
+            }
+
+            .translate-controls .form-select,
+            .translate-controls .btn-primary-glow {
+                flex: 1;
+                min-width: 150px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container-wrapper py-5 px-3" style="max-width: 1400px; margin: 0 auto;">
+    <!-- 헤더 -->
+    <div class="header-section mb-4">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <h1 class="header-title">
+                    <i class="fas fa-wand-magic-sparkles"></i> OCR 콘솔
+                </h1>
+                <p class="header-subtitle">
+                    이미지 및 PDF에서 텍스트를 추출하고, 수정 및 번역 후 안전하게 저장하세요
+                </p>
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+                <button type="button" class="btn btn-primary-glow" style="font-size: 0.85rem;">
+                    <i class="fas fa-history"></i> 히스토리
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 콘텐츠 -->
+    <div class="main-grid">
+        <!-- 사이드바 -->
+        <aside>
+            <div class="sidebar-card">
+                <h2 class="sidebar-title">
+                    <i class="fas fa-list-ul"></i> 카테고리
+                </h2>
+                <ul class="sidebar-list">
+                    <li class="sidebar-item active">
+                        <i class="fas fa-circle"></i>OCR 콘솔
+                    </li>
+                    <li class="sidebar-item">
+                        <i class="fas fa-language"></i>번역 도구
+                    </li>
+                    <li class="sidebar-item">
+                        <i class="fas fa-history"></i>히스토리
+                    </li>
+                    <li class="sidebar-item">
+                        <i class="fas fa-cog"></i>설정
+                    </li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- 메인 콘텐츠 -->
+        <main>
+            <div class="content-grid">
+                <!-- 왼쪽: 업로드 & 미리보기 -->
+                <section class="card-premium">
+                    <h3 class="card-title">
+                        <i class="fas fa-file-arrow-up"></i>파일 업로드
+                    </h3>
+
+                    <form id="ocrUploadForm" class="d-flex flex-column gap-2">
+                        <!-- 업로드 존 -->
+                        <div class="upload-zone" onclick="document.getElementById('fileInput').click();">
+                            <input type="file" id="fileInput" name="file" accept="image/*,application/pdf" style="display: none;">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-arrow-up"></i>
+                            </div>
+                            <p class="upload-text mb-0">
+                                클릭하거나 여기에 <strong>파일을 드래그</strong>하세요
+                            </p>
+                            <p class="upload-text small mb-0">
+                                JPG, PNG, PDF (최대 50MB)
+                            </p>
+                        </div>
+
+                        <div class="info-banner">
+                            <i class="fas fa-circle-info"></i>
+                            <span id="fileInfoText">파일을 선택하면 아래에서 미리보기를 확인할 수 있습니다</span>
+                        </div>
+
+                        <div class="section-divider"></div>
+
+                        <!-- 미리보기 -->
+                        <h4 class="card-title" style="margin-top: 1rem; font-size: 1rem;">
+                            <i class="fas fa-eye"></i>미리보기
+                        </h4>
+                        <div class="preview-area">
+                            <img id="imagePreview" src="" alt="이미지 미리보기" class="preview-img d-none">
+                            <embed id="pdfPreview" type="application/pdf" src="" class="w-100 h-100 d-none" style="min-height: 280px;">
+                            <div id="previewPlaceholder" class="preview-placeholder">
+                                <i class="fas fa-file-lines"></i>
+                                <p>파일을 선택하세요</p>
+                            </div>
+                        </div>
+
+                        <div class="status-badge mt-3">
+                            <span class="status-dot"></span>
+                            <span>준비 완료</span>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- 오른쪽: OCR 결과 & 번역 -->
+                <section class="card-premium">
+                    <h3 class="card-title">
+                        <i class="fas fa-sparkles"></i>OCR 결과
+                    </h3>
+
+                    <form id="ocrSaveForm" class="d-flex flex-column gap-3">
+                        <!-- 제목 입력 -->
+                        <div>
+                            <label for="ocrTitle" class="form-label">
+                                <i class="fas fa-bookmark" style="color: #3b82f6; margin-right: 0.5rem;"></i>저장할 제목
+                            </label>
+                            <input
+                                    type="text"
+                                    id="ocrTitle"
+                                    name="title"
+                                    class="form-control"
+                                    placeholder="OCR 결과를 구분할 제목을 입력하세요">
+                        </div>
+
+                        <!-- OCR 텍스트 -->
+                        <div style="flex-grow: 1; display: flex; flex-direction: column;">
+                            <label for="ocrText" class="form-label">
+                                <i class="fas fa-font" style="color: #3b82f6; margin-right: 0.5rem;"></i>OCR 텍스트 (수정 가능)
+                            </label>
+                            <textarea
+                                    id="ocrText"
+                                    name="ocrText"
+                                    class="form-control"
+                                    rows="6"
+                                    placeholder="OCR 결과 텍스트가 여기에 표시됩니다. 자유롭게 수정할 수 있습니다."
+                                    style="flex-grow: 1;"></textarea>
+                        </div>
+
+                        <div class="section-divider"></div>
+
+                        <!-- 번역 섹션 -->
+                        <div class="translate-section">
+                            <div class="translate-header">
+                                <span class="translate-title">
+                                    <i class="fas fa-language"></i>번역 (향후 업데이트 예정)
+                                </span>
+                                <div class="translate-controls">
+                                    <select class="form-select" disabled style="flex: 1; max-width: 200px;">
+                                        <option>영어 → 한국어</option>
+                                        <option>한국어 → 영어</option>
+                                    </select>
+                                    <button type="button" class="btn btn-primary-glow" disabled>
+                                        <i class="fas fa-sync-alt"></i> 번역
+                                    </button>
+                                </div>
+                            </div>
+                            <textarea
+                                    id="translatedText"
+                                    class="form-control"
+                                    rows="3"
+                                    placeholder="번역 결과가 표시될 영역입니다"
+                                    readonly></textarea>
+                        </div>
+
+                        <!-- 저장 버튼 -->
+                        <div class="d-flex justify-content-between align-items-center pt-2">
+                            <div class="info-banner" style="flex: 1; margin: 0;">
+                                <i class="fas fa-lightbulb"></i>
+                                <span>제목과 텍스트를 확인한 후 <strong>저장</strong>을 누르세요</span>
+                            </div>
+                            <button type="submit" class="btn btn-success-glow ms-2">
+                                <i class="fas fa-floppy-disk"></i> 저장하기
+                            </button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const fileInfoText = document.getElementById('fileInfoText');
+    const imagePreview = document.getElementById('imagePreview');
+    const pdfPreview = document.getElementById('pdfPreview');
+    const previewPlaceholder = document.getElementById('previewPlaceholder');
+
+    fileInput.addEventListener('change', function (event) {
+        const file = event.target.files?.[0];
+
+        if (!file) {
+            fileInfoText.textContent = '파일을 선택하면 아래에서 미리보기를 확인할 수 있습니다';
+            imagePreview.classList.add('d-none');
+            pdfPreview.classList.add('d-none');
+            previewPlaceholder.classList.remove('d-none');
+            return;
+        }
+
+        fileInfoText.textContent = `✓ ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`;
+
+        const objectUrl = URL.createObjectURL(file);
+
+        if (file.type.startsWith('image/')) {
+            imagePreview.src = objectUrl;
+            imagePreview.classList.remove('d-none');
+            pdfPreview.src = '';
+            pdfPreview.classList.add('d-none');
+        } else if (file.type === 'application/pdf') {
+            pdfPreview.src = objectUrl;
+            pdfPreview.classList.remove('d-none');
+            imagePreview.src = '';
+            imagePreview.classList.add('d-none');
+        }
+
+        previewPlaceholder.classList.add('d-none');
+    });
+
+    // 드래그 & 드롭
+    const uploadZone = document.querySelector('.upload-zone');
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.style.borderColor = '#3b82f6';
+    });
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+    });
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+        const files = e.dataTransfer.files;
+        fileInput.files = files;
+        fileInput.dispatchEvent(new Event('change'));
+    });
+</script>
+
+</body>
+</html>

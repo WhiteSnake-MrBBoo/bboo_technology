@@ -29,11 +29,18 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
+    // ✅ ModelMapper 의존성 추가
+    implementation 'org.modelmapper:modelmapper:3.2.0'
+
     //OCR 의존성 주입 - 이미지를 텍스트로 변환
     implementation 'net.sourceforge.tess4j:tess4j:5.13.0'
 
     // PDF → 이미지 변환용 (멀티 페이지 OCR에 필요)
     implementation 'org.apache.pdfbox:pdfbox:2.0.31'
+
+    // ✅ WebClient 사용을 위한 WebFlux 의존성 추가
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
 
     //웹소켓 의존성 주입 - version:web:3.5.7
     implementation 'org.springframework.boot:spring-boot-starter-websocket'

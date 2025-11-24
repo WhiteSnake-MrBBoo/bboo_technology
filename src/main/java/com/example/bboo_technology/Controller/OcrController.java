@@ -1,8 +1,15 @@
 package com.example.bboo_technology.Controller;
 
+import com.example.bboo_technology.Config.OpenAiConfig;
+
+//DTO import 부분
 import com.example.bboo_technology.DTO.OcrResultDto;
-import com.example.bboo_technology.Service.OcrFacadeService;
-import com.example.bboo_technology.Service.OcrResultService;
+import com.example.bboo_technology.DTO.OcrGptResultDto;
+
+import com.example.bboo_technology.Service.Ocrservice.OcrAiGptService;
+import com.example.bboo_technology.Service.Ocrservice.OcrFacadeService;
+import com.example.bboo_technology.Service.Ocrservice.OcrGptResultService;
+import com.example.bboo_technology.Service.Ocrservice.OcrResultService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,19 +43,36 @@ import java.util.Map;
 
 public class OcrController {
 
+    /* OCR - AI 변환용 상수 적의
+    * SUMMARY(상품내용요약) / HOST_SCRIPT(쇼호스트멘트정의) / MARKETING_POINTS(썸네일 키워드 저의)
+    * */
+    // GPT 결과 타입 상수
+    private static final String GPT_TYPE_SUMMARY          = "SUMMARY";
+    private static final String GPT_TYPE_HOST_SCRIPT      = "HOST_SCRIPT";
+    private static final String GPT_TYPE_MARKETING_POINTS = "MARKETING_POINTS";
+
+
     /**
      * 세션에 저장할 때 사용할 키 값 상수.
      * - 하드코딩 문자열 대신 상수로 관리하여 오타 및 중복을 방지한다.
      */
     private static final String SESSION_KEY_OCR_RESULT = "OCR_RESULT";
 
+    /** Open AI 추론 서비스 주입용 interface */
+    private final OcrAiGptService ocrAiGptService;
+
+    private final OcrGptResultService ocrGptResultService;
+    private final OpenAiConfig openAiConfig;
+
+    /** Multifile 인터페이스 주입 */
     private final OcrFacadeService ocrFacadeService;
+
+    /**Ocr용 인터페이스*/
     private final OcrResultService ocrResultService;
     // private final TranslationService translationService; // 번역 연동 시 주입 예정
 
     /**
      * 1) OCR 콘솔 초기 화면 진입
-     *
      * - 사용자가 /ocr 로 GET 요청 시 호출된다.
      * - 세션에 이미 진행 중인 OCR 작업(OcrResultDto)이 있다면 Model 에 올려서 View 에서 그대로 렌더링한다.
      *   (예: 새로고침 또는 다른 페이지 다녀온 경우에도 작업 상태 유지)
@@ -202,6 +226,235 @@ public class OcrController {
 
         return response;
     }
+
+
+    /**
+     * 5) OCR AI 활용 페이지
+     * - GET /ocr/ai : ocr_result DB 값 리스트로 가져 오기
+     * - 파라미터로 선택한 OCR 결과의 ID를 받을 수 있다. (예: /ocr/ai?id=3)
+     * - 기본 흐름:
+     *   1) 저장된 OCR 결과 전체 리스트를 조회하여 좌측 문서 목록에 표시
+     *   2) 선택된 ID가 있으면 해당 문서를 우측 패널에 표시
+     *      없으면 (또는 잘못된 ID면) 첫 번째 문서를 기본 선택
+     */
+    @GetMapping("/ai")
+    public String ocrAiPage(@RequestParam(value = "id", required = false) Long id,
+                            Model model) {
+
+        // 1. 전체 OCR 결과 목록 조회 (좌측 리스트 용도)
+        //    TODO: OcrResultServiceImpl 에서 findAll() 구현 필요
+        var ocrList = ocrResultService.findAll();
+        model.addAttribute("ocrList", ocrList);
+
+        // 2. 우측 패널에 표시할 "선택된 문서" 결정 : 초기값 설정
+        OcrResultDto selected = null;
+
+        if (id != null) {
+            // ID 파라미터가 있을 때: 해당 ID를 기준으로 조회 시도
+            selected = ocrResultService.findById(id);
+        }
+
+        if (selected == null && !ocrList.isEmpty()) {
+            // 3. ID가 없거나 잘못된 경우, 또는 findById 결과가 null 인 경우
+            //    → 목록의 첫 번째 문서를 기본 선택
+            selected = ocrList.get(0);
+        }
+
+        // 4. 선택된 문서를 Model 에 담아서 View 에 전달
+        model.addAttribute("selectedOcr", selected);
+
+        // 뷰 파일: templates/ocr/ocr_ai.html
+        return "ocr/ocr_ai";
+    }
+
+    // ========== 6) OCR AI 활용 - 더미 요약/멘트/마케팅 엔드포인트 ==========
+
+    /**
+     * 6-1) 상품 정보 요약 생성 (더미 버전)
+     *
+     * - POST /ocr/ai/summary
+     * - 파라미터: id (선택된 OcrResult의 PK)
+     * - 역할:
+     *   1) 해당 OCR 결과를 조회
+     *   2) editedText 일부를 잘라서 "요약된 것처럼" 더미 텍스트 생성
+     *   3) JSON 형태로 반환 (success, content)
+     *
+     *  ※ 추후 여기에서 WebClient + OpenAI 호출로 교체할 예정
+     */
+    @PostMapping("/ai/summary")
+    @ResponseBody
+    public Map<String, Object> generateSummary(@RequestParam("id") Long ocrResultId) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            OcrResultDto dto = ocrResultService.findById(ocrResultId);
+            if (dto == null) {
+                response.put("success", false);
+                response.put("message", "해당 ID의 OCR 문서를 찾을 수 없습니다.");
+                return response;
+            }
+
+            // (수정) 더미 대신 실제 GPT 서비스 호출
+            String resultText = ocrAiGptService.generateSummary(dto);
+
+            response.put("success", true);
+            response.put("content", resultText);
+
+        } catch (Exception e) {
+            log.error("AI 요약 생성 중 오류 발생", e);
+            response.put("success", false);
+            response.put("message", "AI 요약 생성 중 오류가 발생했습니다.");
+        }
+
+        return response;
+    }
+
+    /**
+     * 6-2) 쇼호스트 멘트 생성 (더미 버전)
+     */
+    @PostMapping("/ai/host")
+    @ResponseBody
+    public Map<String, Object> generateHostScript(@RequestParam("id") Long ocrResultId) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            OcrResultDto dto = ocrResultService.findById(ocrResultId);
+            if (dto == null) {
+                response.put("success", false);
+                response.put("message", "해당 ID의 OCR 문서를 찾을 수 없습니다.");
+                return response;
+            }
+
+            String resultText = ocrAiGptService.generateHostScript(dto);
+
+            response.put("success", true);
+            response.put("content", resultText);
+
+        } catch (Exception e) {
+            log.error("AI 쇼호스트 멘트 생성 중 오류 발생", e);
+            response.put("success", false);
+            response.put("message", "AI 쇼호스트 멘트 생성 중 오류가 발생했습니다.");
+        }
+
+        return response;
+    }
+
+
+    /**
+     * 6-3) 마케팅 포인트 & 자막 문구 생성 (더미 버전)
+     */
+    @PostMapping("/ai/marketing")
+    @ResponseBody
+    public Map<String, Object> generateMarketingPoints(@RequestParam("id") Long ocrResultId) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            OcrResultDto dto = ocrResultService.findById(ocrResultId);
+            if (dto == null) {
+                response.put("success", false);
+                response.put("message", "해당 ID의 OCR 문서를 찾을 수 없습니다.");
+                return response;
+            }
+
+            String resultText = ocrAiGptService.generateMarketingPoints(dto);
+
+            response.put("success", true);
+            response.put("content", resultText);
+
+        } catch (Exception e) {
+            log.error("AI 마케팅 포인트 생성 중 오류 발생", e);
+            response.put("success", false);
+            response.put("message", "AI 마케팅 포인트 생성 중 오류가 발생했습니다.");
+        }
+
+        return response;
+    }
+
+
+    /**
+     * 7) AI 결과 저장 엔드포인트
+     *
+     * - 요청 파라미터:
+     *   - id      : OCR 결과 ID (ocr_result.id)
+     *   - type    : 결과 타입 (SUMMARY / HOST_SCRIPT / MARKETING_POINTS)
+     *   - content : 저장할 AI 텍스트 (현재 textarea에 표시된 내용)
+     *
+     * - 응답:
+     *   { success: true/false, message: "...", id: 저장된 GPT 결과 PK }
+     */
+    @PostMapping("/ai/save")
+    @ResponseBody
+    public Map<String, Object> saveAiResult(@RequestParam("id") Long ocrResultId,
+                                            @RequestParam("type") String resultType,
+                                            @RequestParam("content") String content) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // 1) 기본 검증
+            if (ocrResultId == null) {
+                response.put("success", false);
+                response.put("message", "OCR 문서 ID가 전달되지 않았습니다.");
+                return response;
+            }
+
+            if (resultType == null || resultType.isBlank()) {
+                response.put("success", false);
+                response.put("message", "결과 타입이 전달되지 않았습니다.");
+                return response;
+            }
+
+            if (content == null || content.trim().isEmpty()) {
+                response.put("success", false);
+                response.put("message", "저장할 내용이 비어 있습니다.");
+                return response;
+            }
+
+            // 2) 타입별로 사용할 모델 선택
+            String model;
+            switch (resultType) {
+                case GPT_TYPE_SUMMARY -> model = openAiConfig.getSummaryModel();
+                case GPT_TYPE_HOST_SCRIPT -> model = openAiConfig.getHostScriptModel();
+                case GPT_TYPE_MARKETING_POINTS -> model = openAiConfig.getMarketingPointsModel();
+                default -> {
+                    response.put("success", false);
+                    response.put("message", "알 수 없는 결과 타입입니다: " + resultType);
+                    return response;
+                }
+            }
+
+            Double temperature = openAiConfig.getDefaultTemperature();
+
+            // 3) DTO 구성
+            OcrGptResultDto dto = OcrGptResultDto.builder()
+                    .ocrResultId(ocrResultId)
+                    .resultType(resultType)
+                    .content(content)
+                    .model(model)
+                    .temperature(temperature)
+                    // 토큰 사용량은 아직 usage 파싱 안 하므로 null로 남겨둠
+                    .build();
+
+            // 4) 서비스 호출하여 DB 저장
+            OcrGptResultDto saved = ocrGptResultService.saveResult(dto);
+
+            response.put("success", true);
+            response.put("id", saved.getId());
+            response.put("createdAt", saved.getCreatedAt());
+            response.put("message", "AI 결과가 성공적으로 저장되었습니다.");
+
+        } catch (Exception e) {
+            log.error("AI 결과 저장 중 예외 발생 - ocrResultId={}, type={}", ocrResultId, resultType, e);
+            response.put("success", false);
+            response.put("message", "AI 결과 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+        }
+
+        return response;
+    }
+
+
+
+
 
 
 }
