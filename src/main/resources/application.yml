@@ -1,0 +1,55 @@
+#// 모델 교체 전략:
+#  // 1) 정확도/품질 업그레이드가 필요할 때
+#  //    - default-model 을 gpt-4.1-mini 또는 gpt-4.1 로 변경
+#//    - 요약/정보 중심: gpt-4.1-mini (비용/속도 균형)
+#//    - 쇼호스트 멘트/카피: gpt-4.1 (창의성/자연스러움 강화)
+#  //
+#  // 2) 비용 최적화가 중요할 때
+#  //    - 자막/아이디어 같은 반복 작업은 gpt-4o-mini 등 경량 모델로 분리
+#  //    - openai.models.summary / host-script / idea 별로 다른 모델을 yml에서 지정
+#  //
+#// 3) 코드 수정 없이 교체하는 원칙:
+#  //    - Service 코드에서는 "모델 이름 문자열"을 직접 쓰지 않는다.
+#  //    - 항상 OpenAiProperties.summaryModel / hostScriptModel / ideaModel 을 참조.
+#  //    - 실제 모델명 변경은 application.yml 에서만 수행.
+
+
+# OpenAI 설정 (시스템 환경 변수 OPENAI_API_KEY를 읽어와서 주입)
+# gpt-4.1-mini or gpt-4.1
+# ===============================
+# OpenAI 기본 설정
+# ===============================
+openai:
+  api:
+    # OS 환경변수에서 API 키 주입
+    #   Windows: 시스템 환경 변수 OPENAI_API_KEY
+    #   Linux/Mac: export OPENAI_API_KEY=sk-xxxx
+    key: ${OPENAI_API_KEY}
+
+    # OpenAI REST 엔드포인트 (v1 기준)
+    base-url: https://api.openai.com/v1
+
+    # 기본 모델 (fallback 용)
+    # - 아래 models.* 에서 별도 지정이 없을 때 사용
+    default-model: gpt-3.5-turbo
+
+    # 기본 temperature
+    # - 요약/정보 위주이기 때문에 낮게 (0.0 ~ 1.0)
+    temperature: 0.4
+
+  # ===============================
+  # 용도별 모델 분리
+  #  - 필요하면 여기 값만 바꿔서 실험 가능
+  # ===============================
+  models:
+    # 3-1. 상품 정보 요약용 모델
+    #  - 예: gpt-3.5-turbo → 추후 gpt-4.1-mini 등으로 변경 가능
+    summary: gpt-3.5-turbo
+
+    # 3-2. 쇼호스트 멘트 스크립트용 모델
+    #  - 방송 멘트, 자연스러운 문장 위주 / gpt-4.1 교체 가능
+    host-script: gpt-3.5-turbo
+
+    # 3-3. 마케팅 포인트 & 자막 문구용 모델
+    #  - 카피라이팅, 아이디어성 문장 위주 / gpt-4.1 교체가능
+    marketing-points: gpt-3.5-turbo

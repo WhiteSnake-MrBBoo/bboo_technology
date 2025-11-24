@@ -1,4 +1,4 @@
-package com.example.bboo_technology.Service;
+package com.example.bboo_technology.Service.Ocrservice;
 
 import com.example.bboo_technology.DTO.OcrResultDto;
 import org.springframework.web.multipart.MultipartFile;

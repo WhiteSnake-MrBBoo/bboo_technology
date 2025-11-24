@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>문서 OCR & 번역 콘솔</title>
+
+    <link rel="icon" type="image/png" href="/images/favicon-ocr.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: #1e293b;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body.sidebar-open {
+            overflow: hidden;
+        }
+
+        .page-wrapper {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== 헤더 ===== */
+        header.mb-4 {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 0 0 24px 24px;
+            padding: 2.5rem 2rem;
+            margin: 0 !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-top: none;
+        }
+
+        .h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        header .text-muted {
+            color: #64748b !important;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-outline-secondary, .btn-outline-primary {
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-primary:not(:disabled):hover {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        /* ===== 메인 컨테이너 ===== */
+        .container-fluid.py-4 {
+            max-width: 100%;
+            padding: 0 !important;
+            background: transparent;
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== 레이아웃 래퍼 ===== */
+        .row.g-3 {
+            max-width: 1400px;
+            margin: 0 auto !important;
+            width: 100%;
+            padding: 0 1rem;
+            position: relative;
+        }
+
+        /* ===== 사이드바 ===== */
+        aside.col-12 {
+            position: relative;
+            z-index: 1040;
+        }
+
+        /* 데스크톱: 고정 사이드바 */
+        @media (min-width: 768px) {
+            aside.col-12.col-md-2.col-lg-2 {
+                position: sticky;
+                top: 2rem;
+                height: fit-content;
+                display: block !important;
+            }
+        }
+
+        /* 모바일/태블릿: 오프캔버스 사이드바 */
+        @media (max-width: 767px) {
+            aside.col-12.col-md-2.col-lg-2 {
+                position: fixed;
+                left: -280px;
+                top: 0;
+                width: 280px;
+                height: 100vh;
+                z-index: 1050;
+                transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                padding: 0 !important;
+                display: block !important;
+            }
+
+            aside.col-12.col-md-2.col-lg-2.active {
+                left: 0;
+            }
+
+            aside.col-12.col-md-2.col-lg-2::before {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(2px);
+                opacity: 0;
+                pointer-events: none;
+                z-index: -1;
+                transition: opacity 0.3s ease;
+            }
+
+            aside.col-12.col-md-2.col-lg-2.active::before {
+                opacity: 1;
+                pointer-events: all;
+            }
+        }
+
+        .card.h-100.shadow-sm {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        @media (min-width: 768px) {
+            .card.h-100.shadow-sm:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+            }
+        }
+
+        .card-body {
+            padding: 1.75rem !important;
+        }
+
+        .card-body .h6 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card-body .h6 i {
+            color: #3b82f6;
+        }
+
+        .list-unstyled li {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem !important;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #64748b;
+            font-weight: 500;
+            user-select: none;
+        }
+
+        .list-unstyled li:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            color: #3b82f6;
+            transform: translateX(4px);
+        }
+
+        .list-unstyled li i.fa-solid.fa-circle-dot {
+            color: #3b82f6 !important;
+        }
+
+        .list-unstyled li i.fa-solid.fa-circle-dot.text-primary {
+            color: #3b82f6 !important;
+        }
+
+        /* ===== 메인 콘텐츠 ===== */
+        main.col-12.col-md-10.col-lg-10 {
+            padding: 0 !important;
+        }
+
+        .row.g-3 > main {
+            max-width: 100%;
+        }
+
+        /* ===== 업로드 섹션 ===== */
+        .upload-zone {
+            border: 2px dashed rgba(59, 130, 246, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: #3b82f6;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+        }
+
+        .upload-zone:hover::before,
+        .upload-zone.dragover::before {
+            left: 100%;
+        }
+
+        /* ===== 파일 인풋 스타일 ===== */
+        .form-label {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-label i {
+            color: #3b82f6;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            background-color: white;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            outline: none;
+            background-color: white;
+        }
+
+        .form-control::placeholder {
+            color: #cbd5e1;
+        }
+
+        .form-text {
+            color: #94a3b8 !important;
+            font-size: 0.85rem;
+        }
+
+        /* ===== 버튼 스타일 ===== */
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 0.65rem 1.5rem;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            position: relative;
+            overflow: hidden;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-primary:hover:not(:disabled)::before {
+            left: 100%;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 0.65rem 1.5rem;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        /* ===== 미리보기 ===== */
+        .border.rounded.bg-white {
+            border: 1px solid #e2e8f0 !important;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%) !important;
+            border-radius: 16px !important;
+        }
+
+        .border.rounded.bg-white img,
+        .border.rounded.bg-white embed {
+            border-radius: 12px;
+        }
+
+        /* ===== 정보 배너 ===== */
+        .alert {
+            border: none;
+            border-left: 4px solid;
+            border-radius: 12px;
+            padding: 1rem !important;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%);
+            border-left-color: #ef4444;
+            color: #b91c1c;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+            border-left-color: #3b82f6;
+            color: #1e40af;
+        }
+
+        .alert i {
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+
+        /* ===== 구분선 ===== */
+        hr.my-2 {
+            background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+            opacity: 1;
+            border: none;
+            height: 1px;
+        }
+
+        /* ===== 번역 섹션 ===== */
+        .border.rounded.p-2.bg-light-subtle {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%) !important;
+            border: 1px solid rgba(59, 130, 246, 0.2) !important;
+            border-radius: 16px !important;
+            padding: 1.5rem !important;
+        }
+
+        .border.rounded.p-2.bg-light-subtle .fw-semibold {
+            font-weight: 600 !important;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .border.rounded.p-2.bg-light-subtle .fw-semibold i {
+            color: #3b82f6;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        /* ===== 사이드바 토글 버튼 ===== */
+        .btn.btn-outline-primary.btn-sm.d-md-none {
+            display: inline-flex !important;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            color: white !important;
+            padding: 0.65rem 1.25rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn.btn-outline-primary.btn-sm.d-md-none:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        @media (min-width: 768px) {
+            .btn.btn-outline-primary.btn-sm.d-md-none {
+                display: none !important;
+            }
+        }
+
+        /* ===== 상태 배지 ===== */
+        .text-success {
+            color: #10b981 !important;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* ===== 반응형 조정 ===== */
+        @media (max-width: 767px) {
+            header.mb-4 {
+                padding: 1.5rem 1rem;
+            }
+
+            .h3 {
+                font-size: 1.75rem;
+            }
+
+            .card-body {
+                padding: 1.5rem !important;
+            }
+
+            .card-body .h6 {
+                font-size: 1rem;
+            }
+
+            .upload-zone {
+                padding: 1.5rem;
+            }
+
+            .d-flex.flex-column.flex-md-row {
+                flex-direction: column !important;
+            }
+
+            .d-flex.align-items-center.gap-2 {
+                gap: 0.5rem !important;
+                width: 100%;
+            }
+
+            main.col-12.col-md-10.col-lg-10 {
+                margin-top: 1rem;
+            }
+        }
+
+        /* ===== 텍스트 유틸 ===== */
+        .text-muted {
+            color: #64748b !important;
+        }
+
+        .small {
+            font-size: 0.875rem;
+        }
+
+        .fw-semibold {
+            font-weight: 600 !important;
+        }
+
+        /* ===== 플로팅 아이콘 애니메이션 ===== */
+        .fa-cloud-arrow-up {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+
+<body style="font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;">
+
+<div class="page-wrapper">
+    <!-- 헤더 -->
+    <header class="mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="h3 mb-1">
+                    <i class="fa-solid fa-wand-magic-sparkles me-2"></i>문서 OCR & 번역 콘솔
+                </h1>
+                <p class="text-muted mb-0 small">
+                    이미지 · PDF에서 텍스트를 추출하고, 수정 · 번역 후 안전하게 저장할 수 있는 작업 콘솔입니다.
+                </p>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                    <i class="fa-regular fa-clock me-1"></i> OCR 히스토리 (준비 중)
+                </button>
+
+                <button type="button" class="btn btn-outline-primary btn-sm d-md-none" id="sidebarToggleBtn">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨테이너 -->
+    <div class="container-fluid py-4">
+        <div class="row g-3">
+            <!-- 사이드바 -->
+            <aside class="col-12 col-md-2 col-lg-2" id="sidebarAside">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body py-3">
+                        <h2 class="h6 mb-3">
+                            <i class="fa-solid fa-list-ul me-2"></i>카테고리
+                        </h2>
+
+                        <ul class="list-unstyled small mb-0 text-muted">
+                            <li class="mb-1"><i class="fa-solid fa-circle-dot me-1 text-primary"></i>OCR 콘솔</li>
+                            <li class="mb-1"><i class="fa-regular fa-circle me-1"></i>번역 도구 (추가 예정)</li>
+                            <li class="mb-1"><i class="fa-regular fa-circle me-1"></i>히스토리 (추가 예정)</li>
+                        </ul>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- 메인 콘텐츠 -->
+            <main class="col-12 col-md-10 col-lg-10">
+                <div class="row g-3">
+
+                    <!-- 왼쪽: 업로드 & 미리보기 -->
+                    <section class="col-12 col-lg-5">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body d-flex flex-column gap-3">
+                                <!-- 파일 업로드 폼 -->
+                                <form id="ocrUploadForm" th:action="@{/ocr/upload}" method="post" enctype="multipart/form-data" class="mb-2">
+
+                                    <div class="mb-2">
+                                        <label for="fileInput" class="form-label fw-semibold small mb-1">
+                                            <i class="fa-solid fa-file-arrow-up me-1"></i>파일 선택
+                                        </label>
+                                        <input class="form-control form-control-sm" type="file" id="fileInput" name="file" accept="image/*,application/pdf">
+                                        <div class="form-text small">
+                                            지원 형식: 이미지(JPG, PNG 등), PDF (멀티 페이지 포함)
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <div class="small text-muted">
+                                            <span id="fileInfoText">선택된 파일이 없습니다.</span>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            <i class="fa-solid fa-magic-wand-sparkles me-1"></i>OCR 실행
+                                        </button>
+                                    </div>
+                                </form>
+
+                                <!-- 서버 메시지 -->
+                                <div th:if="${errorMessage}" class="alert alert-danger py-2 small mb-0">
+                                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                                    <span th:text="${errorMessage}">에러 메시지</span>
+                                </div>
+                                <div th:if="${infoMessage}" class="alert alert-info py-2 small mb-0">
+                                    <i class="fa-solid fa-circle-info me-1"></i>
+                                    <span th:text="${infoMessage}">안내 메시지</span>
+                                </div>
+
+                                <hr class="my-2">
+
+                                <!-- 미리보기 -->
+                                <div class="flex-grow-1 d-flex flex-column">
+                                    <h3 class="h6 mb-2">
+                                        <i class="fa-regular fa-eye me-1"></i>파일 미리보기
+                                    </h3>
+
+                                    <div class="border rounded bg-white d-flex align-items-center justify-content-center position-relative overflow-hidden" style="min-height: 220px;">
+                                        <img id="imagePreview" src="" alt="이미지 미리보기" class="img-fluid d-none" style="max-height: 280px; object-fit: contain;">
+
+                                        <embed id="pdfPreview" type="application/pdf" src="" class="w-100 h-100 d-none" style="min-height: 220px;">
+
+                                        <div id="previewPlaceholder" class="text-muted text-center small px-3">
+                                            <i class="fa-regular fa-file-lines fa-2x mb-2 d-block"></i>
+                                            파일을 선택하면 여기에서 이미지 또는 PDF 미리보기를 확인할 수 있습니다.
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-2 small text-muted" th:if="${ocrResult != null}">
+                                        <span th:if="${ocrResult.fileType == 'PDF'}">
+                                            <i class="fa-regular fa-file-pdf me-1"></i>
+                                            PDF 문서 · <span th:text="${ocrResult.pageCount}">0</span> 페이지
+                                        </span>
+                                        <span th:if="${ocrResult.fileType == 'IMAGE'}">
+                                            <i class="fa-regular fa-image me-1"></i>
+                                            이미지 파일
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 오른쪽: OCR 결과 & 번역 -->
+                    <section class="col-12 col-lg-7">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body d-flex flex-column gap-3">
+
+                                <!-- 현재 파일 상태 -->
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="small text-muted">
+                                        <i class="fa-solid fa-circle-dot text-success me-1"></i>
+                                        <span th:if="${ocrResult != null}">
+                                            현재 작업 중인 파일: <strong th:text="${ocrResult.originalFileName}">sample.pdf</strong>
+                                        </span>
+                                        <span th:if="${ocrResult == null}">
+                                            현재 작업 중인 파일이 없습니다. 파일을 업로드하고 OCR을 실행하세요.
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- OCR 결과 저장 폼 -->
+                                <form id="ocrSaveForm" th:action="@{/ocr/save}" method="post" class="d-flex flex-column gap-3 flex-grow-1">
+
+                                    <!-- 제목 입력 -->
+                                    <div>
+                                        <label for="ocrTitle" class="form-label fw-semibold small mb-1">
+                                            <i class="fa-regular fa-bookmark me-1"></i>저장할 제목
+                                        </label>
+                                        <input type="text" id="ocrTitle" name="title" class="form-control form-control-sm" placeholder="이 OCR 결과를 구분할 수 있는 제목을 입력하세요."

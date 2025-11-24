@@ -1,4 +1,4 @@
-package com.example.bboo_technology.Service;
+package com.example.bboo_technology.Service.Ocrservice;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
