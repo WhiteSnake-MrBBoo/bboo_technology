@@ -64,7 +64,11 @@ T-커머스/홈쇼핑에서
     - 변환 직후: 세션에서 편집
     - 최종 저장: DB에 이력 남김 (`title`, `ocrText`, `editedText` 등)
 
-> 📄 상세 설계 & 코드 흐름: `docs/ocr-module.md` (작성 예정)
+> 📄 상세 설계 & 코드 흐름: `docs/ocr-module.md`
+
+
+https://github.com/user-attachments/assets/f1fc5ac0-3268-4e63-aad5-d7a0fcafef12
+
 
 [![OCR_모듈_상세보기](https://img.shields.io/badge/OCR_모듈_상세보기-4CAF50?style=for-the-badge&logo=readme&logoColor=white)](docs/ocr-module.md)
 
@@ -93,7 +97,11 @@ T-커머스/홈쇼핑에서
 - `application.yml`에 모델 분리 설정 (예: summary/hostScript/marketingPoints)
 - 토큰 사용량(`prompt_tokens`, `completion_tokens`, `total_tokens`)도 함께 기록
 
-> 📄 프롬프트 설계, 모델 설정, WebClient 호출 구조: `docs/gpt-ai-module.md` (작성 예정)
+> 📄 프롬프트 설계, 모델 설정, WebClient 호출 구조: `docs/gpt-ai-module.md`
+
+
+https://github.com/user-attachments/assets/eac7f309-2c23-478a-af91-c95d6a8d3ae5
+
 
 [![GPT_AI_모듈_상세보기](https://img.shields.io/badge/GPT_AI_모듈_상세보기-9C27B0?style=for-the-badge&logo=openai&logoColor=white)](docs/gpt-ai-module.md)
 
@@ -134,7 +142,12 @@ T-커머스/홈쇼핑에서
     - 옵션 DTO 기반으로 헤더/데이터 컬럼 조절
 
 > 📄 엑셀 옵션 DTO, ExcelService 설계, 체크박스 + 모달 연동 흐름:  
-> `docs/excel-history-module.md` (작성 예정)
+> `docs/excel-history-module.md` 
+
+
+https://github.com/user-attachments/assets/fbb0e71d-fd33-49fa-bad8-8624e0212d90
+
+
 
 [![Excel_히스토리_모듈_상세보기](https://img.shields.io/badge/Excel_히스토리_모듈_상세보기-2196F3?style=for-the-badge&logo=microsoft-excel&logoColor=white)](docs/excel-history-module.md)
 
