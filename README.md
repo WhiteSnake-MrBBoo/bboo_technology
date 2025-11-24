@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>JAVA · SpringBoot · OCR · GPT · Excel · T-Commerce Backoffice</h1>
+  <h1>T-Commerce（SK스토어） · JAVA · SpringBoot · OCR · GPT · Excel · Python · Backoffice</h1>
 
   <!-- 스택 아이콘 (뱃지 벨트) -->
   <p align="center">
