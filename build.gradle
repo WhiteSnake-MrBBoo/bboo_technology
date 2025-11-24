@@ -41,6 +41,9 @@ dependencies {
     // ✅ WebClient 사용을 위한 WebFlux 의존성 추가
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
+    // Excel 내보내기용 Apache POI
+    implementation 'org.apache.poi:poi-ooxml:5.4.0'
+
 
     //웹소켓 의존성 주입 - version:web:3.5.7
     implementation 'org.springframework.boot:spring-boot-starter-websocket'

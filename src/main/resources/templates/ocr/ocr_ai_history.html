@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>문서 OCR &amp; AI 콘솔 - AI 히스토리</title>
+
+    <!-- Bootstrap 5 -->
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+            crossorigin="anonymous">
+
+    <style>
+        body {
+            background-color: #f7f7f7;
+        }
+
+        .ai-layout {
+            min-height: 100vh;
+        }
+
+        /* 왼쪽 전체 카테고리 사이드바 */
+        .ai-sidebar-category {
+            background-color: #ffffff;
+            border-right: 1px solid #dee2e6;
+            min-height: 100%;
+        }
+
+        .ai-sidebar-category .category-title {
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        /* 히스토리 리스트 카드 */
+        .ai-history-card {
+            height: 100%;
+        }
+
+        .ai-history-table-wrapper {
+            max-height: calc(100vh - 220px);
+            overflow-y: auto;
+        }
+
+        .ai-detail-card {
+            height: 100%;
+        }
+
+        .ai-detail-textarea {
+            min-height: 260px;
+            resize: vertical;
+        }
+
+        .ai-meta {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        @media (max-width: 991.98px) {
+            .ai-sidebar-category {
+                border-right: none;
+                border-bottom: 1px solid #dee2e6;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 상단 네비게이션 바 -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom mb-3">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" th:href="@{/ocr}">
+            문서 OCR &amp; AI 콘솔
+        </a>
+    </div>
+</nav>
+
+<div class="container-fluid ai-layout">
+    <div class="row g-3">
+
+        <!-- 1. 좌측 카테고리 사이드바 -->
+        <div class="col-12 col-lg-2 ai-sidebar-category p-3">
+            <div class="mb-3">
+                <div class="category-title mb-2">📚 카테고리</div>
+                <small class="text-muted">
+                    OCR 및 AI 관련 기능을 왼쪽에서 바로 선택할 수 있습니다.
+                </small>
+            </div>
+
+            <div class="list-group list-group-flush small">
+                <a class="list-group-item list-group-item-action"
+                   th:href="@{/ocr}">
+                    OCR 콘솔
+                </a>
+
+                <a class="list-group-item list-group-item-action"
+                   th:href="@{/ocr/translate}">
+                    번역 도구 (추후 예정)
+                </a>
+
+                <a class="list-group-item list-group-item-action"
+                   th:href="@{/ocr/ai}">
+                    OCR AI 활용
+                </a>
+
+                <a class="list-group-item list-group-item-action active"
+                   aria-current="true"
+                   th:href="@{/ocr/ai/history}">
+                    AI 히스토리
+                </a>
+            </div>
+        </div>
+
+        <!-- 2. 우측: 히스토리 리스트 + 상세 보기 -->
+        <div class="col-12 col-lg-10">
+            <div class="row g-3">
+
+                <!-- 2-1. AI 히스토리 리스트 영역 -->
+                <div class="col-12 col-xl-5">
+                    <div class="card ai-history-card shadow-sm">
+                        <div class="card-header py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-semibold small">AI 히스토리 콘솔</span>
+                                <div class="d-flex gap-2">
+                                    <!-- 전체 목록 엑셀 -->
+                                    <button type="button"
+                                            class="btn btn-outline-success btn-sm"
+                                            onclick="window.location.href='/ocr/ai/history/export';">
+                                        현재 목록 엑셀
+                                    </button>
+                                    <!-- 선택 항목 엑셀 -->
+                                    <button type="button"
+                                            class="btn btn-outline-primary btn-sm"
+                                            id="btnExportSelected">
+                                        선택 항목 엑셀
+                                    </button>
+                                    <!-- ✅ 엑셀 옵션 모달 버튼 (Step 1) -->
+                                    <button type="button"
+                                            class="btn btn-outline-secondary btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#excelOptionModal">
+                                        엑셀 옵션
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="small text-muted mt-1">
+                                AI가 생성한 요약/멘트/마케팅 결과를 최신순으로 확인하고, 엑셀로 내보낼 수 있습니다.
+                            </div>
+                        </div>
+
+                        <div class="card-body p-0">
+
+                            <!-- 목록이 없을 때 -->
+                            <div th:if="${#lists.isEmpty(historyList)}"
+                                 class="p-3 text-muted small">
+                                아직 저장된 AI 결과가 없습니다.<br>
+                                먼저 OCR AI 활용 화면에서 결과를 생성하고 저장해 주세요.
+                            </div>
+
+                            <!-- 목록 있을 때 -->
+                            <div th:if="${!#lists.isEmpty(historyList)}"
+                                 class="ai-history-table-wrapper">
+
+                                <table class="table table-hover table-sm align-middle mb-0">
+                                    <thead class="table-light">
+                                    <tr class="text-center align-middle">
+                                        <!-- 전체 선택 체크박스 -->
+                                        <th style="width:40px;">
+                                            <input type="checkbox"
+                                                   class="form-check-input"
+                                                   id="chkAll">
+                                        </th>
+                                        <th style="width:60px;">ID</th>
+                                        <th style="width:90px;">타입</th>
+                                        <th>OCR 제목</th>
+                                        <th style="width:180px;">파일명</th>
+                                        <th style="width:140px;">생성 시각</th>
+                                    </tr>
+                                    </thead>
+
+                                    <tbody>
+                                    <tr th:each="item : ${historyList}"
+                                        th:classappend="${selectedHistory != null} and ${item.id} == ${selectedHistory.id} ? ' table-primary' : ''"
+                                        th:onclick="'window.location.href=\'' + @{/ocr/ai/history(id=${item.id})} + '\';'"
+                                        style="cursor:pointer;">
+
+                                        <!-- 개별 체크박스 (행 클릭과 분리: JS에서 이벤트 막음) -->
+                                        <td class="text-center">
+                                            <input type="checkbox"
+                                                   class="form-check-input history-checkbox"
+                                                   th:value="${item.id}">
+                                        </td>
+
+                                        <!-- GPT 결과 ID -->
+                                        <td class="text-center small" th:text="${item.id}">1</td>
+
+                                        <!-- 결과 타입 -->
+                                        <td class="text-center small" th:text="${item.resultType}">
+                                            SUMMARY
+                                        </td>
+
+                                        <!-- OCR 제목 -->
+                                        <td class="small" th:text="${item.ocrTitle}">
+                                            샘플 OCR 제목
+                                        </td>
+
+                                        <!-- 파일명 -->
+                                        <td class="small text-muted"
+                                            th:text="${item.ocrFileName}">
+                                            sample.pdf
+                                        </td>
+
+                                        <!-- 생성 시각 -->
+                                        <td class="small text-muted text-center"
+                                            th:text="${item.createdAt}">
+                                            2025-11-24 10:41
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2-2. 선택된 AI 결과 상세 영역 -->
+                <div class="col-12 col-xl-7">
+                    <div class="card ai-detail-card shadow-sm">
+                        <div class="card-header py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-semibold small">
+                                        <span th:if="${selectedHistory != null}">
+                                            선택된 AI 결과 상세
+                                        </span>
+                                        <span th:if="${selectedHistory == null}">
+                                            선택된 AI 결과가 없습니다.
+                                        </span>
+                                    </div>
+                                    <div class="ai-meta" th:if="${selectedHistory != null}">
+                                        <span th:text="${selectedHistory.resultType}">HOST_SCRIPT</span>
+                                        ·
+                                        <span th:text="${selectedHistory.ocrTitle}">샘플 OCR 제목</span>
+                                    </div>
+                                </div>
+
+                                <div class="text-end" th:if="${selectedHistory != null}">
+                                    <button type="button"
+                                            class="btn btn-outline-secondary btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#aiContentModal">
+                                        내용 확대
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+
+                            <!-- 선택된 결과가 있을 때 -->
+                            <div th:if="${selectedHistory != null}">
+                                <div class="mb-2 ai-meta">
+                                    파일명:
+                                    <span th:text="${selectedHistory.ocrFileName}">
+                                        sample.pdf
+                                    </span>
+                                    · 모델:
+                                    <span th:text="${selectedHistory.model}">
+                                        gpt-3.5-turbo
+                                    </span>
+                                    · 생성 시각:
+                                    <span th:text="${selectedHistory.createdAt}">
+                                        2025-11-24 10:41
+                                    </span>
+                                </div>
+
+                                <label class="form-label fw-semibold">AI 결과 내용</label>
+                                <textarea class="form-control ai-detail-textarea"
+                                          readonly
+                                          th:text="${selectedHistory.content}">
+                                    AI 결과 내용이 여기에 표시됩니다.
+                                </textarea>
+
+                                <div class="form-text">
+                                    이 내용은 선택된 GPT 결과 한 건의 전체 텍스트입니다.
+                                    필요시 복사하여 다른 문서에 붙여넣기 할 수 있습니다.
+                                </div>
+                            </div>
+
+                            <!-- 선택된 결과가 없을 때 -->
+                            <div th:if="${selectedHistory == null}">
+                                <p class="text-muted small mb-1">
+                                    좌측 AI 결과 목록에서 항목을 선택하면, 여기에서 상세 내용을 확인할 수 있습니다.
+                                </p>
+                                <div class="form-control ai-detail-textarea bg-light text-muted">
+                                    선택된 AI 결과가 없습니다.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div> <!-- /row -->
+        </div> <!-- /col-10 -->
+
+    </div> <!-- /row -->
+</div> <!-- /container-fluid -->
+
+<!-- 선택된 내용 확대용 모달 -->
+<div class="modal fade"
+     id="aiContentModal"
+     tabindex="-1"
+     aria-labelledby="aiContentModalLabel"
+     aria-hidden="true"
+     th:if="${selectedHistory != null}">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="aiContentModalLabel">
+                    AI 결과 상세 보기
+                    (<span th:text="${selectedHistory.resultType}">HOST_SCRIPT</span> ·
+                    <span th:text="${selectedHistory.ocrTitle}">샘플 OCR 제목</span>)
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <textarea class="form-control"
+                          style="min-height: 400px; resize: vertical;"
+                          readonly
+                          th:text="${selectedHistory.content}">
+                    AI 결과 전체 내용이 여기에 표시됩니다.
+                </textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ 엑셀 옵션 모달 (Step 1: 옵션 UI & 값 수집만) -->
+<div class="modal fade"
+     id="excelOptionModal"
+     tabindex="-1"
+     aria-labelledby="excelOptionModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="excelOptionModalLabel">
+                    엑셀 내보내기 옵션 설정
+                </h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <!-- 1) 내보낼 범위 설정 -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">내보낼 범위</label>
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="radio"
+                               name="excelScope"
+                               id="scopeAll"
+                               value="ALL"
+                               checked>
+                        <label class="form-check-label" for="scopeAll">
+                            현재 목록 전체 내보내기
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="radio"
+                               name="excelScope"
+                               id="scopeSelected"
+                               value="SELECTED">
+                        <label class="form-check-label" for="scopeSelected">
+                            체크한 항목만 내보내기
+                        </label>
+                    </div>
+                    <div class="form-text">
+                        ※ "체크한 항목만"을 선택한 경우, 좌측 리스트에서 먼저 항목을 선택해 주세요.
+                    </div>
+                </div>
+
+                <!-- 2) 포함할 컬럼 설정 -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">포함할 컬럼 선택</label>
+
+                    <div class="row row-cols-1 row-cols-md-2 g-1 small">
+                        <div class="col">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="includeId"
+                                       checked>
+                                <label class="form-check-label" for="includeId">
+                                    결과 ID
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="includeResultType"
+                                       checked>
+                                <label class="form-check-label" for="includeResultType">
+                                    결과 타입 (SUMMARY / HOST_SCRIPT / MARKETING_POINTS)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="includeOcrTitle"
+                                       checked>
+                                <label class="form-check-label" for="includeOcrTitle">
+                                    OCR 제목
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="includeOcrFileName"
+                                       checked>
+                                <label class="form-check-label" for="includeOcrFileName">
+                                    OCR 파일명
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="includeCreatedAt"
+                                       checked>
+                                <label class="form-check-label" for="includeCreatedAt">
+                                    생성 시각
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="includeModel"
+                                       checked>
+                                <label class="form-check-label" for="includeModel">
+                                    모델명 (gpt-3.5-turbo 등)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="includeContent"
+                                       checked>
+                                <label class="form-check-label" for="includeContent">
+                                    본문 내용(content)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="includeTokens">
+                                <label class="form-check-label" for="includeTokens">
+                                    토큰 사용량 (prompt / completion / total)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-text">
+                        ※ 나중에 "방송용 요약 템플릿", "내부 분석용" 같은 프리셋도 추가 가능.
+                    </div>
+                </div>
+
+                <!-- 3) 파일명 설정 -->
+                <div class="mb-2">
+                    <label for="excelFileName" class="form-label fw-semibold">
+                        저장할 파일명
+                    </label>
+                    <input type="text"
+                           class="form-control"
+                           id="excelFileName"
+                           placeholder="예: ocr_ai_history.xlsx">
+                    <div class="form-text">
+                        비워두면 기본 파일명(ocr_ai_history.xlsx)으로 저장됩니다.
+                    </div>
+                </div>
+
+            </div>
+
+            <!--엑셀 옵셕별 저장 modal 폼-->
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    취소
+                </button>
+                <!-- ✅ Step 1: 아직 서버 호출 X, 옵션 수집만 -->
+                <!-- 모달 안: 실행 버튼 -->
+                <button type="button"
+                        class="btn btn-primary"
+                        id="btnExcelOptionConfirm">
+                    엑셀 다운로드 실행
+                </button>
+
+                <form id="excelExportForm"
+                      method="post"
+                      action="/ocr/ai/history/export-with-options"
+                      style="display:none;">
+                    <!-- JS에서 동적으로 hidden input들을 채워 넣을 예정 -->
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- 선택 항목 엑셀 전송용 숨겨진 폼 -->
+<form id="selectedExportForm"
+      method="post"
+      th:action="@{/ocr/ai/history/export-selected}"
+      style="display:none;">
+    <!-- 필요 시 CSRF 토큰 hidden input 추가 -->
+    <!--
+    <input type="hidden"
+           th:name="${_csrf.parameterName}"
+           th:value="${_csrf.token}">
+    -->
+</form>
+
+<!-- Bootstrap JS -->
+<script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        // 공통 유틸 함수들 ================================
+        function getSelectedIds() {
+            const ids = [];
+            document.querySelectorAll(".history-checkbox:checked").forEach(cb => {
+                ids.push(cb.value);
+            });
+            return ids;
+        }
+
+        function clearChildren(elem) {
+            while (elem.firstChild) {
+                elem.removeChild(elem.firstChild);
+            }
+        }
+
+        function addHidden(form, name, value) {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = name;
+            input.value = value;
+            form.appendChild(input);
+        }
+
+        // =======================
+        // 0) 체크박스 클릭 시 행 클릭 이벤트 막기
+        // =======================
+        const rowCheckboxes = document.querySelectorAll(".history-checkbox");
+        const headerCheckbox = document.getElementById("chkAll");
+
+        rowCheckboxes.forEach(cb => {
+            cb.addEventListener("click", function (event) {
+                // 행 전체 클릭 시 상세 페이지 이동하는 이벤트와 분리
+                event.stopPropagation();
+            });
+        });
+
+        if (headerCheckbox) {
+            headerCheckbox.addEventListener("click", function (event) {
+                event.stopPropagation();
+            });
+        }
+
+        // =======================
+        // 1) 전체 선택 / 해제
+        // =======================
+        if (headerCheckbox) {
+            headerCheckbox.addEventListener("change", function () {
+                const checked = headerCheckbox.checked;
+                rowCheckboxes.forEach(cb => cb.checked = checked);
+            });
+        }
+
+        // =======================
+        // 2) (구버전) 선택 항목만 바로 엑셀로 보내기
+        //    - /ocr/ai/history/export-selected 로 POST
+        //    - 옵션 모달 없이 “체크한 것만 빠르게 다운로드” 용도로 남겨둠
+        // =======================
+        const btnExportSelected = document.getElementById("btnExportSelected");
+        const selectedForm = document.getElementById("selectedExportForm");
+
+        if (btnExportSelected && selectedForm) {
+            btnExportSelected.addEventListener("click", function () {
+                const selectedIds = getSelectedIds();
+
+                if (selectedIds.length === 0) {
+                    alert("엑셀로 내보낼 항목을 먼저 선택해 주세요.");
+                    return;
+                }
+
+                clearChildren(selectedForm);
+                selectedIds.forEach(id => addHidden(selectedForm, "ids", id));
+
+                selectedForm.submit();
+            });
+        }
+
+        // =======================
+        // 3) 엑셀 옵션 모달 → 서버로 옵션 전달해서 엑셀 생성
+        // =======================
+        const btnExcelOptionConfirm = document.getElementById("btnExcelOptionConfirm");
+        const excelForm = document.getElementById("excelExportForm"); // 숨겨진 폼(HTML에 필요)
+
+        if (btnExcelOptionConfirm && excelForm) {
+            btnExcelOptionConfirm.addEventListener("click", function () {
+
+                // 3-1) 내보낼 범위 (ALL / SELECTED)
+                const scopeRadio = document.querySelector("input[name='excelScope']:checked");
+                const scope = scopeRadio ? scopeRadio.value : "ALL";
+
+                // 3-2) 체크된 히스토리 ID들
+                const selectedIds = getSelectedIds();
+
+                if (scope === "SELECTED" && selectedIds.length === 0) {
+                    alert("체크한 항목만 내보내기를 선택하셨습니다.\n좌측 리스트에서 먼저 항목을 선택해 주세요.");
+                    return;
+                }
+
+                // 3-3) 컬럼 포함 여부 옵션 수집
+                const includeId         = document.getElementById("includeId")?.checked         ?? false;
+                const includeResultType = document.getElementById("includeResultType")?.checked ?? false;
+                const includeOcrTitle   = document.getElementById("includeOcrTitle")?.checked   ?? false;
+                const includeOcrFile    = document.getElementById("includeOcrFileName")?.checked?? false;
+                const includeCreatedAt  = document.getElementById("includeCreatedAt")?.checked  ?? false;
+                const includeModel      = document.getElementById("includeModel")?.checked      ?? false;
+                const includeContent    = document.getElementById("includeContent")?.checked    ?? false;
+                const includeTokens     = document.getElementById("includeTokens")?.checked     ?? false;
+
+                const fileNameInput = document.getElementById("excelFileName");
+                const fileName = fileNameInput ? fileNameInput.value.trim() : "";
+
+                // (디버깅용) 콘솔 로그가 필요하면 주석 해제
+                // console.log("Excel Options:", {
+                //     scope, selectedIds, includeId, includeResultType,
+                //     includeOcrTitle, includeOcrFile, includeCreatedAt,
+                //     includeModel, includeContent, includeTokens, fileName
+                // });
+
+                // 3-4) 숨겨진 폼 채우기
+                clearChildren(excelForm);
+
+                // 범위
+                addHidden(excelForm, "scope", scope);
+
+                // 선택된 ID (scope=ALL 이라도 보내는 건 무방함)
+                selectedIds.forEach(id => addHidden(excelForm, "selectedIds", id));
+
+                // 컬럼 옵션들
+                addHidden(excelForm, "includeId", includeId);
+                addHidden(excelForm, "includeResultType", includeResultType);
+                addHidden(excelForm, "includeOcrTitle", includeOcrTitle);
+                addHidden(excelForm, "includeOcrFileName", includeOcrFile);
+                addHidden(excelForm, "includeCreatedAt", includeCreatedAt);
+                addHidden(excelForm, "includeModel", includeModel);
+                addHidden(excelForm, "includeContent", includeContent);
+                addHidden(excelForm, "includeTokens", includeTokens);
+
+                // 파일명 (비어 있으면 서버에서 기본값 사용)
+                if (fileName) {
+                    addHidden(excelForm, "fileName", fileName);
+                }
+
+                // 3-5) 폼 설정 & 제출
+                excelForm.method = "post";
+                excelForm.action = "/ocr/ai/history/export-with-options"; // 컨트롤러 엔드포인트와 맞춰야 함
+
+                excelForm.submit();
+
+                // 3-6) 모달 닫기
+                const modalEl = document.getElementById("excelOptionModal");
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) {
+                    modal.hide();
+                }
+            });
+        }
+    });
+</script>
+
+
+</body>
+</html>

@@ -26,4 +26,11 @@ public interface OcrGptResultRepository extends JpaRepository<OcrGptResult, Long
             Long ocrResultId,
             String resultType
     );
+
+    /**
+     * ✅ 전체 GPT 결과를 생성일 기준 최신순으로 조회
+     * - 히스토리 화면 기본 리스트에서 사용
+     */
+    List<OcrGptResult> findAllByOrderByCreatedAtDesc();
+
 }
