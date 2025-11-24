@@ -186,29 +186,25 @@ String text = selectedOcr.getEditedText();
 ---
 
 ## 🔗 11. 관련 문서 링크
-[![🔙 메인 README.md](https://github.com/WhiteSnake-MrBBoo/bboo_technology/pulls)]
+🔙 [메인 README.md](../README.md)
 
+🤖 [GPT AI 모듈 문서](./gpt-ai-module.md)
 
-🔙 메인 README.md
-
-🤖 GPT 모듈: docs/gpt-ai-module.md
-
-📊 Excel Export 모듈: docs/excel-history-module.md
-
----
-📌 12. TODO (향후 개선점)
-
-Whisper 기반 STT와 OCR 결과 통합
-
-비정형 문서(표/영수증) 구조화 OCR
-
-PDF → 이미지 분할 OCR 최적화
-
-Vision + OCR 융합 파이프라인 설계
+📊 [Excel Export 모듈 문서](./excel-history-module.md)
 
 ---
 
-작성자: 김밥 (WhiteSnake-MrBBoo)
+## 📌 12. TODO (향후 개선점)
+
+- Whisper 기반 STT + OCR 결과 통합 파이프라인  
+- 비정형 문서(표/영수증) 구조화 OCR  
+- PDF → 이미지 분할 OCR 최적화  
+- Vision + OCR 융합 AI 파이프라인 설계  
+
+---
+
+✍ **작성자:** 김밥 (WhiteSnake-MrBBoo)
+
 
 
 
