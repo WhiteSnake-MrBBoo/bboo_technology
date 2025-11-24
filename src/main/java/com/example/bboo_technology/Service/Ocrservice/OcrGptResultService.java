@@ -9,7 +9,7 @@ import java.util.List;
  *
  * - "이 결과 저장" 버튼을 통해 들어온 데이터를 DB에 저장
  * - OCR 결과 기준으로 GPT 히스토리 조회
- * - (추후) 전체 히스토리/엑셀 내보내기에도 활용 가능
+ * - 전체 히스토리/엑셀 내보내기에도 활용
  */
 public interface OcrGptResultService {
 
@@ -25,6 +25,15 @@ public interface OcrGptResultService {
      */
     List<OcrGptResultDto> findByOcrResultId(Long ocrResultId);
 
+    /**
+     * 전체 GPT 결과를 생성일 기준 최신순으로 조회
+     * - /ocr/ai/history 기본 리스트용
+     */
+    List<OcrGptResultDto> findAllOrderByCreatedAtDesc();
 
-
+    /**
+     * 체크박스로 선택된 GPT 결과들만 조회 (엑셀 선택 다운로드용)
+     * - ids: ocr_gpt_result PK 리스트
+     */
+    List<OcrGptResultDto> findByIds(List<Long> ids);
 }

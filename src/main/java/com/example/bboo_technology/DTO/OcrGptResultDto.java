@@ -25,6 +25,13 @@ public class OcrGptResultDto {
      */
     private Long ocrResultId;
 
+    // ✅ 히스토리 화면에서 보기 위해 추가 : localhost:9001/ocr/ai/history
+    // 연결된 OCR 결과의 제목
+    private String ocrTitle;
+
+    // 연결된 OCR 결과의 원본 파일명
+    private String ocrFileName;
+
     /**
      * 결과 타입: SUMMARY / HOST_SCRIPT / MARKETING_POINTS
      */
