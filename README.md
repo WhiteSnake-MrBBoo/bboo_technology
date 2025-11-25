@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>T-Commerce（SK스토어） · JAVA · SpringBoot · OCR · GPT · Excel · Python · Backoffice</h1>
+  <h1>T-Commerce · JAVA · SpringBoot · OCR · GPT · Excel · Python · Backoffice</h1>
 
   <!-- 스택 아이콘 (뱃지 벨트) -->
   <p align="center">
@@ -58,13 +58,13 @@ T-커머스/홈쇼핑에서
 **핵심 포인트**
 
 - **PDF 멀티 페이지 분기**
-    - Service 레이어에서 `IMAGE vs PDF` 분기
+    - Service 레이어에서 `IMAGE(단일페이지) vs PDF(멀티 페이지)` 분기
     - PDF일 경우 각 페이지별 이미지를 생성 후 반복 OCR → 하나의 텍스트로 병합
 - **세션 + DB 2단 구조**
     - 변환 직후: 세션에서 편집
     - 최종 저장: DB에 이력 남김 (`title`, `ocrText`, `editedText` 등)
 
-> 📄 상세 설계 & 코드 흐름: `docs/ocr-module.md`
+> 📑 OCR 상세 설계 & 코드 흐름: [OCR Module](./docs/ocr-module.md)
 
 
 https://github.com/user-attachments/assets/f1fc5ac0-3268-4e63-aad5-d7a0fcafef12
@@ -81,7 +81,7 @@ https://github.com/user-attachments/assets/f1fc5ac0-3268-4e63-aad5-d7a0fcafef12
 - `/ocr/ai` 화면에서 **좌측은 OCR 결과 리스트**, **우측은 AI 변환 패널**
 - 하나의 OCR 결과에 대해 **3가지 AI 결과** 생성:
     1. **SUMMARY** – 상품 정보 요약
-    2. **HOST_SCRIPT** – 쇼호스트 멘트 스크립트
+    2. **HOST_SCRIPT** – 쇼호스트 방송 멘트 추론
     3. **MARKETING_POINTS** – 마케팅 포인트 & 자막 문구
 
 - 상단 탭 UI:
@@ -97,7 +97,7 @@ https://github.com/user-attachments/assets/f1fc5ac0-3268-4e63-aad5-d7a0fcafef12
 - `application.yml`에 모델 분리 설정 (예: summary/hostScript/marketingPoints)
 - 토큰 사용량(`prompt_tokens`, `completion_tokens`, `total_tokens`)도 함께 기록
 
-> 📄 프롬프트 설계, 모델 설정, WebClient 호출 구조: `docs/gpt-ai-module.md`
+> 🤖 프롬프트 설계, 모델 설정, WebClient 호출 구조: [GPT AI Module](./docs/gpt-ai-module.md)
 
 
 https://github.com/user-attachments/assets/eac7f309-2c23-478a-af91-c95d6a8d3ae5
@@ -129,24 +129,22 @@ https://github.com/user-attachments/assets/eac7f309-2c23-478a-af91-c95d6a8d3ae5
 
 3. **엑셀 옵션 모달**
     - 내보낼 범위:
-        - `전체(ALL)` / `선택(SELECTED)`
+        - ** `전체(ALL)` / `선택(SELECTED)` **
     - 포함 컬럼 옵션:
         - ID / 결과 타입 / OCR 제목 / OCR 파일명
         - 생성 시각 / 모델 / 내용 / 토큰 사용량
     - 파일명:
-        - 기본값: `ocr_ai_history.xlsx`
+        - ** 기본값: `ocr_ai_history.xlsx`
         - 사용자가 직접 파일명 지정 가능
 
 - 내부 구현: `ExcelService.writeGptHistoryToExcel(List<OcrGptResultDto>, AiHistoryExcelOptionDto, HttpServletResponse)`
     - **Apache POI**로 동적 컬럼 생성
     - 옵션 DTO 기반으로 헤더/데이터 컬럼 조절
 
-> 📄 엑셀 옵션 DTO, ExcelService 설계, 체크박스 + 모달 연동 흐름:  
-> `docs/excel-history-module.md` 
-
+- 📄 엑셀 옵션 DTO, ExcelService 설계, 체크박스 + 모달 연동 흐름:  
+> 📊 [Excel History Module](./docs/excel-history-module.md)
 
 https://github.com/user-attachments/assets/fbb0e71d-fd33-49fa-bad8-8624e0212d90
-
 
 
 [![Excel_히스토리_모듈_상세보기](https://img.shields.io/badge/Excel_히스토리_모듈_상세보기-2196F3?style=for-the-badge&logo=microsoft-excel&logoColor=white)](docs/excel-history-module.md)
