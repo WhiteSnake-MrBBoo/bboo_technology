@@ -230,6 +230,12 @@ https://github.com/user-attachments/assets/fbb0e71d-fd33-49fa-bad8-8624e0212d90
 관련 실전 경험은 별도 포트폴리오 레포에서 정리 중입니다.  
 예시:
 
+## 📊 Excel History Module
+
+## 🤖 AI Vision 포트폴리오
+
+[![AI Vision Portfolio](https://img.shields.io/badge/AI_Vision_포트폴리오-2196F3?style=for-the-badge&logo=microsoft-excel&logoColor=white)](https://github.com/WhiteSnake-MrBBoo/information_portfolio)
+
 - CCTV Vision AI Dashboard
 - UiPath 리뷰 요약 RPA 파이프라인
 - AI Prompt Creative Pipeline 등
