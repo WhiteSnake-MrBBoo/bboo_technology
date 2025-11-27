@@ -293,30 +293,49 @@
                                             th:text="${ocrResult != null} ? ${ocrResult.ocrText} : ''"></textarea>
                                 </div>
 
-                                <!-- 3) 번역 영역 (향후 번역 API 연동 시 활성화 예정) -->
+
+                                <!-- 3) 번역 영역 -->
                                 <div class="border rounded p-2 bg-light-subtle">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <div class="fw-semibold small">
-                                            <i class="fa-solid fa-language me-1"></i>번역 (향후 API 연동 예정)
+                                            <i class="fa-solid fa-language me-1"></i>번역
                                         </div>
-                                        <!-- 번역 방향 선택 (UI만 먼저 준비) -->
+                                        <!-- 번역 방향 + 레벨 선택 + 실행 버튼 -->
                                         <div class="d-flex align-items-center gap-1">
-                                            <select class="form-select form-select-sm" id="translateDirection" disabled>
-                                                <option value="EN_KO">영어 → 한국어</option>
+                                            <!-- 번역 방향 선택 -->
+                                            <select class="form-select form-select-sm" id="translateDirection">
                                                 <option value="KO_EN">한국어 → 영어</option>
+                                                <option value="EN_KO">영어 → 한국어</option>
                                             </select>
-                                            <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+
+                                            <!-- 번역 레벨 선택 (BASIC / PREMIUM / ECONOMY) -->
+                                            <select class="form-select form-select-sm" id="translateLevel">
+                                                <option value="BASIC" selected>기본</option>
+                                                <option value="PREMIUM">프리미엄</option>
+                                                <option value="ECONOMY">저비용</option>
+                                            </select>
+
+                                            <!-- 번역 실행 버튼 -->
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" id="translateBtn">
                                                 번역 실행
                                             </button>
                                         </div>
                                     </div>
+
+                                    <!-- 번역 결과 출력 영역 -->
                                     <textarea
                                             id="translatedText"
                                             class="form-control form-control-sm"
                                             rows="4"
-                                            placeholder="여기는 번역 결과가 표시될 영역입니다. 번역 API 연동 후 활성화될 예정입니다."
+                                            placeholder="번역 결과가 이 영역에 표시됩니다."
+                                            th:text="${translation != null} ? ${translation.translatedText} : ''"
                                             readonly></textarea>
+
+                                    <div class="small text-muted mt-1" id="translateMetaInfo"
+                                         th:text="${translation != null} ? 'from ' + ${translation.sourceLang} + ' to ' + ${translation.targetLang} + ' · 엔진: ' + ${translation.engine} + ' · 레벨: ' + ${translation.level} : ''">
+                                    </div>
                                 </div>
+
 
                                 <!-- 4) 저장 버튼 영역 -->
                                 <div class="d-flex justify-content-between align-items-center pt-1">
@@ -420,6 +439,100 @@
             alert('사이드바 토글은 향후 구현 예정입니다.');
         });
     }
+
+    // ===============================
+    // OCR 텍스트 → 번역 API 연동
+    //  - 번역 버튼 클릭 시 /api/translation/ocr 호출
+    //  - 응답으로 받은 번역 결과를 translatedText 영역에 출력
+    // ===============================
+
+    const ocrTextArea = document.getElementById('ocrText');
+    const translateBtn = document.getElementById('translateBtn');
+    const translateDirectionSelect = document.getElementById('translateDirection');
+    const translateLevelSelect = document.getElementById('translateLevel');
+    const translatedTextArea = document.getElementById('translatedText');
+    const translateMetaInfo = document.getElementById('translateMetaInfo');
+
+    if (translateBtn) {
+        translateBtn.addEventListener('click', async function () {
+
+            // 1) 번역할 원본 텍스트 가져오기 (현재 화면의 OCR 텍스트 기준)
+            const sourceRaw = ocrTextArea ? ocrTextArea.value.trim() : '';
+
+            if (!sourceRaw) {
+                alert('번역할 텍스트가 없습니다. 먼저 OCR을 실행하거나 텍스트를 입력해 주세요.');
+                return;
+            }
+
+            // 2) 번역 방향 결정 (KO_EN / EN_KO)
+            const direction = translateDirectionSelect ? translateDirectionSelect.value : 'KO_EN';
+            let sourceLang = 'ko';
+            let targetLang = 'en';
+
+            if (direction === 'EN_KO') {
+                sourceLang = 'en';
+                targetLang = 'ko';
+            }
+
+            // 3) 번역 레벨 결정 (BASIC / PREMIUM / ECONOMY)
+            const level = translateLevelSelect ? translateLevelSelect.value : 'BASIC';
+
+            // 4) 버튼 중복 클릭 방지용 비활성화
+            translateBtn.disabled = true;
+            translateBtn.innerText = '번역 중...';
+
+            try {
+                // 5) form-urlencoded 형식으로 파라미터 구성
+                const params = new URLSearchParams();
+                params.append('sourceText', sourceRaw);
+                params.append('sourceLang', sourceLang);
+                params.append('targetLang', targetLang);
+                params.append('level', level);
+
+                const response = await fetch('/api/translation/ocr', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                        // ※ Spring Security에서 CSRF를 사용 중이라면,
+                        //    여기에서 X-CSRF-TOKEN 헤더도 함께 전송해야 할 수 있습니다.
+                    },
+                    body: params.toString()
+                });
+
+                if (!response.ok) {
+                    alert('번역 요청 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+                    return;
+                }
+
+                const data = await response.json();
+
+                // 6) 번역 결과 textarea에 출력
+                if (translatedTextArea) {
+                    translatedTextArea.value = data.translatedText || '';
+                }
+
+                // 7) 메타 정보(언어/엔진/레벨) 표시
+                if (translateMetaInfo) {
+                    const src = data.sourceLang || sourceLang;
+                    const tgt = data.targetLang || targetLang;
+                    const engine = data.engine || '-';
+                    const lvl = data.level || level;
+
+                    translateMetaInfo.textContent =
+                        `from ${src} to ${tgt} · 엔진: ${engine} · 레벨: ${lvl}`;
+                }
+
+            } catch (error) {
+                console.error('번역 호출 중 예외 발생', error);
+                alert('번역 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+            } finally {
+                // 8) 버튼 상태 원복
+                translateBtn.disabled = false;
+                translateBtn.innerText = '번역 실행';
+            }
+        });
+    }
+
 
 
 
