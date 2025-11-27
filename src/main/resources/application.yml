@@ -37,6 +37,9 @@ openai:
     # - 요약/정보 위주이기 때문에 낮게 (0.0 ~ 1.0)
     temperature: 0.4
 
+  translation:
+      temperature: 0.2   # 번역용: 좀 더 보수적인 값
+
   # ===============================
   # 용도별 모델 분리
   #  - 필요하면 여기 값만 바꿔서 실험 가능
@@ -53,3 +56,11 @@ openai:
     # 3-3. 마케팅 포인트 & 자막 문구용 모델
     #  - 카피라이팅, 아이디어성 문장 위주 / gpt-4.1 교체가능
     marketing-points: gpt-3.5-turbo
+
+    # 3-4. 번역용 모델 (새로 추가)
+    #  - BASIC   : 일반적인 번역 (속도/비용 균형)
+    #  - PREMIUM : 품질 우선 (비즈니스/쇼호스트급)
+    #  - ECONOMY : 저비용 대량 번역 작업용
+    translation-basic: gpt-4.1-mini
+    translation-premium: gpt-4.1
+    translation-economy: gpt-4o-mini

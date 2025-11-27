@@ -126,7 +126,7 @@ public class OcrAiGptServiceImpl implements OcrAiGptService {
      * @param userPrompt    user 역할 프롬프트
      * @return choices[0].message.content (실패 시 예외 대신 안내 텍스트 반환)
      */
-    protected String callChatCompletion(String model,
+    public String callChatCompletion(String model,
                                         double temperature,
                                         String systemPrompt,
                                         String userPrompt) {

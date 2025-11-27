@@ -6,6 +6,7 @@ import com.example.bboo_technology.Config.OpenAiConfig;
 import com.example.bboo_technology.DTO.OcrResultDto;
 import com.example.bboo_technology.DTO.OcrGptResultDto;
 
+import com.example.bboo_technology.DTO.TranslationDto;
 import com.example.bboo_technology.Service.Ocrservice.OcrAiGptService;
 import com.example.bboo_technology.Service.Ocrservice.OcrFacadeService;
 import com.example.bboo_technology.Service.Ocrservice.OcrGptResultService;
@@ -58,6 +59,10 @@ public class OcrController {
      */
     private static final String SESSION_KEY_OCR_RESULT = "OCR_RESULT";
 
+    // 번역 정보 같은 URL 에 값 넣어 주기 위한 상수 키 값
+    private static final String SESSION_KEY_OCR_TRANSLATION = "OCR_TRANSLATION";
+
+
     /** Open AI 추론 서비스 주입용 interface */
     private final OcrAiGptService ocrAiGptService;
 
@@ -80,10 +85,16 @@ public class OcrController {
     @GetMapping
     public String showOcrConsole(Model model, HttpSession session) {
 
-        // 세션에 기존 OCR_RESULT 가 있으면 꺼내서 모델에 전달
+        // 1) OCR 결과 세션 → 모델 :  OCR_RESULT 가 있으면 꺼내서 모델에 전달
         Object sessionObj = session.getAttribute(SESSION_KEY_OCR_RESULT);
         if (sessionObj instanceof OcrResultDto ocrResultDto) {
             model.addAttribute("ocrResult", ocrResultDto);
+        }
+
+        // 2) 번역 결과 세션 → 모델
+        Object translationObj = session.getAttribute(SESSION_KEY_OCR_TRANSLATION);
+        if (translationObj instanceof TranslationDto translationDto) {
+            model.addAttribute("translation", translationDto);
         }
 
         // 뷰 파일: templates/ocr/ocr_console.html
@@ -121,6 +132,9 @@ public class OcrController {
             // 3. 세션에 OCR 결과 저장
             //    - 이후 "저장하기", "번역" 등에서 재사용할 수 있게 한다.
             session.setAttribute(SESSION_KEY_OCR_RESULT, ocrResultDto);
+
+            // ✅ (중요) 새 파일을 업로드했으므로, 이전 번역 결과는 초기화
+//            session.removeAttribute(SESSION_KEY_OCR_TRANSLATION);
 
             // 4. Model 에도 담아서 즉시 View 에 렌더링
             model.addAttribute("ocrResult", ocrResultDto);
