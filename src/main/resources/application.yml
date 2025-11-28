@@ -64,3 +64,13 @@ openai:
     translation-basic: gpt-4.1-mini
     translation-premium: gpt-4.1
     translation-economy: gpt-4o-mini
+
+  # ===============================
+  # 4) STT(Whisper) 전용 설정 추가 :
+  # ===============================
+  stt:
+    provider: openai              # 나중에 local 로 바꿔서 Python STT 서버도 지원
+    base-url: https://api.openai.com/v1
+    model: whisper-1              # 모델명은 코드에서 직접 쓰지 말고 여기만 수정
+    timeout-ms: 60000             # STT는 파일 크기에 따라 오래 걸릴 수 있으니 별도 설정
+    max-audio-seconds: 600        # (선택) 허용 최대 길이

@@ -1,0 +1,195 @@
+<!--
+    파일 위치:
+    src/main/resources/templates/stt/stt-upload.html
+
+    역할:
+    - STT 테스트용 오디오 업로드 페이지 (GET /api/stt/file)
+    - 폼 전송: POST /api/stt/file (multipart/form-data)
+    - 추후 HexaStay Admin 스타일로 리디자인 예정
+
+    TODO:
+    - 디자인: HexaStay 스타일(블랙/골드 or 프로젝트 컨셉)에 맞게 재구성
+    - JS: Ajax/fetch로 비동기 호출 + 결과 영역에 텍스트 뿌리기
+    - 유효성 검증: 파일 확장자/용량 체크 추가
+-->
+
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>STT 테스트 업로드</title>
+
+    <!-- (임시) Bootstrap CDN - 추후 공통 레이아웃/정식 CSS로 교체 예정 -->
+    <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    />
+
+    <style>
+        /* TODO: 추후 HexaStay Admin 컨셉으로 리디자인 예정 */
+
+        body {
+            background-color: #f5f5f5;
+        }
+
+        .stt-container {
+            max-width: 720px;
+            margin: 40px auto;
+        }
+
+        .stt-card {
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+        }
+
+        .stt-card-header {
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .form-label {
+            font-weight: 600;
+        }
+
+        .small-hint {
+            font-size: 0.85rem;
+            color: #777;
+        }
+
+        .result-box {
+            white-space: pre-wrap;
+            font-family: "SF Mono", Consolas, monospace;
+            background-color: #111827;
+            color: #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            min-height: 80px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="stt-container">
+    <div class="card stt-card">
+        <!-- =============================
+             카드 헤더
+             ============================= -->
+        <div class="card-header stt-card-header bg-white">
+            <h5 class="mb-0">STT 테스트 업로드</h5>
+            <p class="mb-0 text-muted small">
+                오디오 파일을 업로드해서 <strong>OpenAI Whisper Stub</strong> 흐름을 테스트합니다.<br>
+                (현재는 Stub 엔진이므로 실제 텍스트가 아니라 테스트 메시지가 반환됩니다)
+            </p>
+        </div>
+
+        <!-- =============================
+             카드 바디 - 업로드 폼
+             ============================= -->
+        <div class="card-body">
+
+            <!--
+                (중요) action 경로:
+                - POST /api/stt/file
+                - Controller: SttController.transcribeFile(...)
+            -->
+            <form
+                    method="post"
+                    action="/api/stt/file"
+                    enctype="multipart/form-data"
+                    class="needs-validation"
+            >
+                <!-- 1) 오디오 파일 입력 -->
+                <div class="mb-3">
+                    <label for="file" class="form-label">오디오 파일</label>
+                    <input
+                            type="file"
+                            class="form-control"
+                            id="file"
+                            name="file"
+                            accept="audio/*"
+                            required
+                    >
+                    <div class="small-hint">
+                        * wav, mp3 등 오디오 파일을 선택하세요.
+                    </div>
+                </div>
+
+                <!-- 2) 세션 ID (옵션) -->
+                <div class="mb-3">
+                    <label for="sessionId" class="form-label">세션 ID (옵션)</label>
+                    <input
+                            type="text"
+                            class="form-control"
+                            id="sessionId"
+                            name="sessionId"
+                            placeholder="비워두면 서버에서 자동 생성"
+                    >
+                    <div class="small-hint">
+                        * 방송/대화 흐름을 구분하고 싶을 때만 입력하세요.
+                    </div>
+                </div>
+
+                <!-- 3) 언어 힌트 (옵션) -->
+                <div class="mb-3">
+                    <label for="language" class="form-label">언어 힌트 (옵션)</label>
+                    <input
+                            type="text"
+                            class="form-control"
+                            id="language"
+                            name="language"
+                            placeholder="예: ko, en, ja (비워두면 auto-detect)"
+                    >
+                    <div class="small-hint">
+                        * STT 엔진이 인식할 언어를 힌트로 줄 수 있습니다. (예: ko, en, ja...)
+                    </div>
+                </div>
+
+                <!-- 4) 전송 버튼 -->
+                <div class="d-flex justify-content-between align-items-center">
+                    <button type="submit" class="btn btn-primary">
+                        STT 변환 실행
+                    </button>
+
+                    <div class="small-hint mb-0">
+                        * 현재 단계: <strong>Whisper Stub 엔진</strong> 테스트만 가능합니다.
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- =============================
+             (선택) 카드 푸터 - 결과 안내 영역
+             - 현재는 서버 응답 JSON 이 그대로 브라우저에 표시되지만,
+               추후 Ajax로 응답을 받아 아래 영역에 뿌려줄 수 있음.
+             ============================= -->
+        <div class="card-footer bg-white">
+            <p class="mb-2 small text-muted">
+                추후 계획:
+            </p>
+            <ul class="mb-0 small text-muted">
+                <li>Ajax/fetch로 STT API 호출 후, 아래 박스에 transcript 출력</li>
+                <li>STT 결과로 기술서 요약 / 쇼호스트 멘트 / 자막 생성 버튼 연결</li>
+                <li>Whisper Stub → 실제 OpenAI Whisper / Local Python STT 교체</li>
+            </ul>
+
+            <!-- TODO: 나중에 JS로 응답 바인딩해서 사용하는 영역 -->
+            <div class="mt-3">
+                <label class="form-label small">응답 결과 (향후 JS 바인딩용)</label>
+                <div class="result-box">
+                    <!--
+                        TODO:
+                        - 현재는 단순 정적 영역.
+                        - 추후 JS로 /api/stt/file 응답(JSON)을 받아서
+                          transcript / message 등을 여기 출력.
+                    -->
+                    (현재는 폼 전송 후 브라우저에서 JSON 응답을 직접 확인하세요.)
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- (옵션) Bootstrap JS - 나중에 필요하면 사용 -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
