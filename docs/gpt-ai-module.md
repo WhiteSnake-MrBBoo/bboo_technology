@@ -46,13 +46,13 @@ openai:
   api:
     key: ${OPENAI_API_KEY}          # OS 환경변수에서 주입
     base-url: https://api.openai.com/v1
-    default-model: gpt-3.5-turbo    # 기본 모델
+    default-model: gpt-4.1    # 기본 모델
     temperature: 0.4                # 정보 위주 답변 → 낮은 값
 
   models:
-    summary: gpt-3.5-turbo          # 상품 요약용
-    hostScript: gpt-3.5-turbo       # 쇼호스트 멘트용
-    marketingPoints: gpt-3.5-turbo  # 마케팅 포인트용
+    summary: gpt-4.1-mini          # 상품 요약용
+    hostScript: gpt-4o       # 쇼호스트 멘트용
+    marketingPoints: gpt-4.1  # 마케팅 포인트용
 ```
 
 > API 키는 코드에 하드코딩하지 않고,
