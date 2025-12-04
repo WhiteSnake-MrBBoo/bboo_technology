@@ -67,7 +67,9 @@ T-커머스/홈쇼핑에서
 > 📑 OCR 상세 설계 & 코드 흐름: [OCR Module](./docs/ocr-module.md)
 
 
-https://github.com/user-attachments/assets/f1fc5ac0-3268-4e63-aad5-d7a0fcafef12
+
+https://github.com/user-attachments/assets/c74eeda8-bb6c-47c5-81e8-5231e1a05b56
+
 
 
 [![OCR_모듈_상세보기](https://img.shields.io/badge/OCR_모듈_상세보기-4CAF50?style=for-the-badge&logo=readme&logoColor=white)](docs/ocr-module.md)
