@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Style OCR Console</title>
+
+    <link rel="icon" type="image/png" href="/images/favicon-ocr.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"  crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        :root {
+            /* Google Material 3 Color Tokens */
+            --md-sys-color-primary: #0b57d0;
+            --md-sys-color-on-primary: #ffffff;
+            --md-sys-color-primary-container: #d3e3fd;
+            --md-sys-color-on-primary-container: #041e49;
+            --md-sys-color-background: #f0f4f9;
+            --md-sys-color-surface: #ffffff;
+            --md-sys-color-surface-container: #f3f6fc;
+            --md-sys-color-outline: #747775;
+            --md-sys-color-outline-variant: #c4c7c5;
+
+            --border-radius-lg: 24px;
+            --border-radius-md: 12px;
+            --border-radius-sm: 8px;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--md-sys-color-background);
+            color: #1f1f1f;
+        }
+
+        /* App Bar (Header) */
+        header {
+            padding: 12px 24px;
+            margin-bottom: 10px;
+        }
+        .app-logo {
+            font-size: 22px;
+            color: #444746;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+        }
+        .app-logo i {
+            color: var(--md-sys-color-primary);
+            font-size: 24px;
+            margin-right: 12px;
+        }
+
+        /* Sidebar Navigation (Gmail Style) */
+        .nav-google .nav-link {
+            color: #444746;
+            padding: 10px 16px 10px 24px;
+            border-radius: 0 24px 24px 0; /* 반원 형태 */
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+        }
+        .nav-google .nav-link:hover {
+            background-color: #f2f2f2;
+        }
+        .nav-google .nav-link.active {
+            background-color: #c2e7ff; /* Google Active Blue */
+            color: #001d35;
+        }
+        .nav-google .nav-link i {
+            font-size: 18px;
+            width: 24px;
+            margin-right: 12px;
+            text-align: center;
+        }
+
+        /* Material Card */
+        .google-card {
+            background-color: var(--md-sys-color-surface);
+            border-radius: var(--border-radius-lg);
+            padding: 24px;
+            height: 100%;
+            border: none;
+            box-shadow: none; /* Flat design preferred */
+        }
+
+        /* Upload Area */
+        .upload-zone {
+            border: 1px dashed var(--md-sys-color-outline);
+            border-radius: var(--border-radius-md);
+            background-color: var(--md-sys-color-surface-container);
+            transition: all 0.2s;
+            position: relative;
+        }
+        .upload-zone:hover {
+            background-color: #eef5fe;
+            border-color: var(--md-sys-color-primary);
+        }
+
+        /* Buttons */
+        .btn-google {
+            border-radius: 20px; /* Pill shape */
+            font-weight: 500;
+            font-size: 14px;
+            padding: 8px 24px;
+            transition: box-shadow 0.2s;
+        }
+        .btn-google-primary {
+            background-color: var(--md-sys-color-primary);
+            color: white;
+            border: none;
+        }
+        .btn-google-primary:hover {
+            background-color: #0842a0;
+            box-shadow: 0 1px 3px 1px rgba(0,0,0,0.15);
+            color: white;
+        }
+        .btn-google-filled-tonal {
+            background-color: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            border: none;
+        }
+        .btn-google-filled-tonal:hover {
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* Inputs */
+        .form-control, .form-select {
+            border-radius: 4px; /* Material Text Field style */
+            border: 1px solid var(--md-sys-color-outline);
+            padding: 10px 14px;
+            font-size: 14px;
+            background-color: white;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--md-sys-color-primary);
+            box-shadow: 0 0 0 2px rgba(11, 87, 208, 0.2);
+            outline: none;
+        }
+
+        /* Toolbar Style (for Translation) */
+        .editor-toolbar {
+            background-color: #f0f4f9;
+            border-radius: 16px;
+            padding: 8px 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Preview Area */
+        .preview-box {
+            background-color: #e3e3e3; /* Darker grey for contrast */
+            border-radius: var(--border-radius-md);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Typography utils */
+        .text-google-title {
+            font-size: 22px; /* 24 -> 22 */
+            color: #1f1f1f;
+        }
+        .label-google {
+            font-size: 12px;
+            font-weight: 500;
+            color: #444746;
+            margin-bottom: 6px;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="app-logo">
+            <i class="fa-brands fa-google"></i> <span>OCR & Translation Console</span>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-light rounded-circle" style="width: 40px; height: 40px;" disabled>
+                <i class="fa-solid fa-clock-rotate-left text-muted"></i>
+            </button>
+
+            <!-- ✅ 여기 id 추가 -->
+            <button type="button"
+                    class="btn btn-google-primary d-md-none"
+                    id="mobileSidebarToggle"
+                    data-bs-toggle="offcanvas"
+                    data-bs-target="#mobileSidebar"
+                    aria-controls="mobileSidebar">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 14px;">
+                J
+            </div>
+        </div>
+    </div>
+</header>
+
+
+<div class="container-fluid ps-0 pe-4"> <div class="row g-0">
+
+    <aside class="col-md-2 col-lg-2 d-none d-md-block pe-3">
+        <nav class="nav-google d-flex flex-column mt-2">
+            <div class="px-4 mb-3 text-muted small fw-bold">TOOLS</div>
+
+            <a href="http://localhost:9001/ocr" class="nav-link active">
+                <i class="fa-solid fa-crop-simple"></i> OCR Studio
+            </a>
+            <a href="http://localhost:9001/ocr/ai" class="nav-link">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> AI Converter
+            </a>
+            <a href="http://localhost:9001/ocr/ai/history" class="nav-link">
+                <i class="fa-regular fa-file-excel"></i> History
+            </a>
+            <a href="http://localhost:9001/api/stt/file" class="nav-link">
+                <i class="fa-solid fa-microphone"></i> Voice to Text
+            </a>
+        </nav>
+    </aside>
+
+    <main class="col-12 col-md-10 col-lg-10">
+        <div class="row g-3">
+
+            <section class="col-12 col-lg-5">
+                <div class="google-card d-flex flex-column">
+
+                    <div class="mb-4">
+                        <h2 class="h5 mb-1">Source File</h2>
+                        <p class="text-muted small mb-0">Upload image or PDF to extract text</p>
+                    </div>
+
+                    <form id="ocrUploadForm" th:action="@{/ocr/upload}" method="post" enctype="multipart/form-data" class="mb-3">
+
+                        <div class="upload-zone p-4 text-center mb-3">
+                            <div class="mb-3">
+                                <i class="fa-solid fa-cloud-arrow-up text-primary fa-2x"></i>
+                            </div>
+                            <input class="form-control form-control-sm mb-2" type="file" id="fileInput" name="file" accept="image/*,application/pdf" style="max-width: 80%; margin: 0 auto;">
+                            <div class="small text-muted" id="fileInfoText">Select a file (JPG, PNG, PDF)</div>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-google btn-google-primary">
+                                <i class="fa-solid fa-bolt me-2"></i>Extract Text
+                            </button>
+                        </div>
+                    </form>
+
+                    <div th:if="${errorMessage}" class="alert alert-danger d-flex align-items-center p-2 small mb-3 rounded-3">
+                        <i class="fa-solid fa-circle-exclamation me-2"></i>
+                        <span th:text="${errorMessage}">Error</span>
+                    </div>
+                    <div th:if="${infoMessage}" class="alert alert-primary d-flex align-items-center p-2 small mb-3 rounded-3">
+                        <i class="fa-solid fa-circle-info me-2"></i>
+                        <span th:text="${infoMessage}">Info</span>
+                    </div>
+
+                    <div class="flex-grow-1 d-flex flex-column">
+                        <label class="label-google">PREVIEW</label>
+                        <div class="preview-box flex-grow-1 position-relative" style="min-height: 280px;">
+                            <img id="imagePreview" src="" alt="Preview" class="img-fluid d-none" style="max-height: 260px;">
+                            <embed id="pdfPreview" type="application/pdf" src="" class="w-100 h-100 d-none" style="min-height: 280px;">
+
+                            <div id="previewPlaceholder" class="text-center text-muted">
+                                <i class="fa-regular fa-image fa-2x mb-2 opacity-50"></i>
+                                <p class="small m-0">No file selected</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-2 text-end text-muted small" th:if="${ocrResult != null}">
+                            <span th:if="${ocrResult.fileType == 'PDF'}">PDF Document · <span th:text="${ocrResult.pageCount}">0</span> pages</span>
+                            <span th:if="${ocrResult.fileType == 'IMAGE'}">Image File</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="col-12 col-lg-7">
+                <div class="google-card">
+                    <form id="ocrSaveForm" th:action="@{/ocr/save}" method="post" class="d-flex flex-column h-100 gap-3">
+
+                        <div>
+                            <input type="text" id="ocrTitle" name="title"
+                                   class="form-control form-control-lg border-0 px-0 fs-4"
+                                   style="border-bottom: 1px solid #e0e0e0 !important; border-radius: 0; box-shadow: none;"
+                                   placeholder="Untitled Document"
+                                   th:value="${ocrResult != null} ? ${ocrResult.title} : ''">
+                        </div>
+
+                        <div class="editor-toolbar">
+                            <i class="fa-solid fa-language text-primary me-1"></i>
+                            <select class="form-select form-select-sm border-0 bg-white" id="translateDirection" style="width: auto;">
+                                <option value="KO_EN">Korean → English</option>
+                                <option value="EN_KO">English → Korean</option>
+                            </select>
+
+                            <div class="vr mx-1 opacity-25"></div>
+
+                            <select class="form-select form-select-sm border-0 bg-white" id="translateLevel" style="width: auto;">
+                                <option value="BASIC" selected>Basic</option>
+                                <option value="PREMIUM">Premium</option>
+                                <option value="ECONOMY">Economy</option>
+                            </select>
+
+                            <button type="button" class="btn btn-google btn-google-filled-tonal btn-sm ms-auto" id="translateBtn">
+                                Translate
+                            </button>
+                        </div>
+
+                        <div class="row g-3 flex-grow-1">
+                            <div class="col-12 col-md-6 d-flex flex-column">
+                                <label class="label-google text-primary">EXTRACTED TEXT</label>
+                                <textarea id="ocrText" name="ocrText" class="form-control flex-grow-1 border-0 bg-light"
+                                          style="resize: none; border-radius: 12px;"
+                                          placeholder="Text extracted from file will appear here..."
+                                          th:text="${ocrResult != null} ? ${ocrResult.ocrText} : ''"></textarea>
+                            </div>
+
+                            <div class="col-12 col-md-6 d-flex flex-column">
+                                <label class="label-google text-success">TRANSLATION</label>
+                                <textarea id="translatedText" class="form-control flex-grow-1 border-0"
+                                          style="resize: none; background-color: #f8fbf8; border-radius: 12px;"
+                                          placeholder="Translation result..."
+                                          th:text="${translation != null} ? ${translation.translatedText} : ''" readonly></textarea>
+                                <div class="text-end small text-muted mt-1" id="translateMetaInfo"
+                                     th:text="${translation != null} ? ${translation.sourceLang} + '→' + ${translation.targetLang} : ''"></div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end pt-2 border-top mt-2">
+                            <button type="submit" class="btn btn-google btn-google-primary px-4">
+                                <i class="fa-regular fa-floppy-disk me-2"></i>Save to Drive
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+</div>
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
+    <div class="offcanvas-header bg-light">
+        <h5 class="offcanvas-title fw-bold" id="mobileSidebarLabel">
+            <i class="fa-brands fa-google text-primary me-2"></i> OCR Menu
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body px-0">
+        <nav class="nav-google d-flex flex-column">
+            <div class="px-4 mb-3 text-muted small fw-bold">TOOLS</div>
+
+            <a href="http://localhost:9001/ocr" class="nav-link active">
+                <i class="fa-solid fa-crop-simple"></i> OCR Studio
+            </a>
+            <a href="http://localhost:9001/ocr/ai" class="nav-link">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> AI Converter
+            </a>
+            <a href="http://localhost:9001/ocr/ai/history" class="nav-link">
+                <i class="fa-regular fa-file-excel"></i> History
+            </a>
+            <a href="http://localhost:9001/api/stt/file" class="nav-link">
+                <i class="fa-solid fa-microphone"></i> Voice to Text
+            </a>
+        </nav>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+
+<script>
+    // (중요) 클라이언트에서 이미지 / PDF 미리보기 처리
+    const fileInput = document.getElementById('fileInput');
+    const fileInfoText = document.getElementById('fileInfoText');
+    const imagePreview = document.getElementById('imagePreview');
+    const pdfPreview = document.getElementById('pdfPreview');
+    const previewPlaceholder = document.getElementById('previewPlaceholder');
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function (event) {
+            const file = event.target.files && event.target.files[0];
+
+            if (!file) {
+                fileInfoText.textContent = 'Select a file (JPG, PNG, PDF)';
+                imagePreview.classList.add('d-none');
+                pdfPreview.classList.add('d-none');
+                previewPlaceholder.classList.remove('d-none');
+                imagePreview.src = '';
+                pdfPreview.src = '';
+                return;
+            }
+
+            fileInfoText.textContent = `${file.name}`;
+            const objectUrl = URL.createObjectURL(file);
+
+            if (file.type.startsWith('image/')) {
+                imagePreview.src = objectUrl;
+                imagePreview.classList.remove('d-none');
+                pdfPreview.src = '';
+                pdfPreview.classList.add('d-none');
+                previewPlaceholder.classList.add('d-none');
+            } else if (file.type === 'application/pdf') {
+                pdfPreview.src = objectUrl;
+                pdfPreview.classList.remove('d-none');
+                imagePreview.src = '';
+                imagePreview.classList.add('d-none');
+                previewPlaceholder.classList.add('d-none');
+            } else {
+                imagePreview.src = '';
+                pdfPreview.src = '';
+                imagePreview.classList.add('d-none');
+                pdfPreview.classList.add('d-none');
+                previewPlaceholder.classList.remove('d-none');
+            }
+        });
+    }
+
+    // [수정됨] 기존의 alert 코드를 실행시키던 id="sidebarToggleBtn" 관련 JS 코드는 완전히 제거되었습니다.
+
+
+    // ===============================
+    // OCR 텍스트 → 번역 API 연동 (기존 로직 유지)
+    // ===============================
+    const ocrTextArea = document.getElementById('ocrText');
+    const translateBtn = document.getElementById('translateBtn');
+    const translateDirectionSelect = document.getElementById('translateDirection');
+    const translateLevelSelect = document.getElementById('translateLevel');
+    const translatedTextArea = document.getElementById('translatedText');
+    const translateMetaInfo = document.getElementById('translateMetaInfo');
+
+    if (translateBtn) {
+        translateBtn.addEventListener('click', async function () {
+            const sourceRaw = ocrTextArea ? ocrTextArea.value.trim() : '';
+
+            if (!sourceRaw) {
+                alert('No text to translate.');
+                return;
+            }
+
+            const direction = translateDirectionSelect ? translateDirectionSelect.value : 'KO_EN';
+            let sourceLang = 'ko';
+            let targetLang = 'en';
+
+            if (direction === 'EN_KO') {
+                sourceLang = 'en';
+                targetLang = 'ko';
+            }
+
+            const level = translateLevelSelect ? translateLevelSelect.value : 'BASIC';
+
+            translateBtn.disabled = true;
+            translateBtn.innerText = 'Translating...';
+
+            try {
+                const params = new URLSearchParams();
+                params.append('sourceText', sourceRaw);
+                params.append('sourceLang', sourceLang);
+                params.append('targetLang', targetLang);
+                params.append('level', level);
+
+                const response = await fetch('/api/translation/ocr', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                    },
+                    body: params.toString()
+                });
+
+                if (!response.ok) {
+                    alert('Translation failed.');
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (translatedTextArea) {
+                    translatedTextArea.value = data.translatedText || '';
+                }
+
+                if (translateMetaInfo) {
+                    const src = data.sourceLang || sourceLang;
+                    const tgt = data.targetLang || targetLang;
+                    const engine = data.engine || '-';
+                    const lvl = data.level || level;
+
+                    translateMetaInfo.textContent =
+                        `${src} → ${tgt} · ${engine} · ${lvl}`;
+                }
+
+            } catch (error) {
+                console.error('Error', error);
+                alert('An error occurred.');
+            } finally {
+                translateBtn.disabled = false;
+                translateBtn.innerText = 'Translate';
+            }
+        });
+    }
+    // ===============================
+    // 모바일 사이드바 토글 (Offcanvas)
+    // ===============================
+/*    document.addEventListener('DOMContentLoaded', function () {
+        const mobileSidebarToggleBtn = document.getElementById('mobileSidebarToggle');
+        const mobileSidebarEl = document.getElementById('mobileSidebar');
+
+        if (mobileSidebarToggleBtn && mobileSidebarEl && window.bootstrap && bootstrap.Offcanvas) {
+            const mobileSidebarOffcanvas = new bootstrap.Offcanvas(mobileSidebarEl);
+
+            mobileSidebarToggleBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                mobileSidebarOffcanvas.toggle();
+            });
+        } else {
+            console.warn('Offcanvas 초기화 실패: 요소 또는 bootstrap이 준비되지 않음');
+        }
+    });*/
+
+</script>
+</body>
+</html>

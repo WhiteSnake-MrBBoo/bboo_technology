@@ -82,9 +82,9 @@ public class OcrController {
      * - 세션에 이미 진행 중인 OCR 작업(OcrResultDto)이 있다면 Model 에 올려서 View 에서 그대로 렌더링한다.
      * (예: 새로고침 또는 다른 페이지 다녀온 경우에도 작업 상태 유지)
      */
-    @GetMapping("/ppal")
+    @GetMapping("/ppp")
     public String ppal() {
-        return "ocr/public_global"; // templates/ocr/ppublic_global.html
+        return "ocr/ocr_mstyle"; // templates/ocr/ppublic_global.html
     }
 
 
@@ -104,7 +104,8 @@ public class OcrController {
         }
 
         // 뷰 파일: templates/ocr/ocr_console.html
-        return "ocr/ocr_console";
+//        return "ocr/ocr_console";
+        return "ocr/ocr_mstyle";
     }
 
     /**
@@ -153,7 +154,8 @@ public class OcrController {
         }
 
         // 업로드 & OCR 완료 후에도 같은 화면(ocr_console.html)을 재사용
-        return "ocr/ocr_console";
+//        return "ocr/ocr_console";
+        return "ocr/ocr_mstyle";
     }
 
     /**
@@ -324,7 +326,9 @@ public class OcrController {
         model.addAttribute("selectedOcr", selected);
 
         // 뷰 파일: templates/ocr/ocr_ai.html
-        return "ocr/ocr_ai";
+//        return "ocr/ocr_ai";
+//        return "ocr/gpt_google01";
+        return "ocr/ocr_ai_goostyle";
     }
 
     // ========== 6) OCR AI 활용 - 더미 요약/멘트/마케팅 엔드포인트 ==========
