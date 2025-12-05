@@ -95,11 +95,6 @@
                 </a>
 
                 <a class="list-group-item list-group-item-action"
-                   th:href="@{/ocr/translate}">
-                    번역 도구 (추후 예정)
-                </a>
-
-                <a class="list-group-item list-group-item-action"
                    th:href="@{/ocr/ai}">
                     OCR AI 활용
                 </a>
@@ -107,8 +102,15 @@
                 <a class="list-group-item list-group-item-action active"
                    aria-current="true"
                    th:href="@{/ocr/ai/history}">
-                    AI 히스토리
+                    AI _ EXCEL_히스토리
                 </a>
+
+                <a class="list-group-item list-group-item-action"
+                   th:href="@{/api/stt/file}">
+                    STT (음성 텍스트변환)
+                </a>
+
+
             </div>
         </div>
 

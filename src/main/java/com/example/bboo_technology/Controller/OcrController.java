@@ -80,8 +80,14 @@ public class OcrController {
      * 1) OCR 콘솔 초기 화면 진입
      * - 사용자가 /ocr 로 GET 요청 시 호출된다.
      * - 세션에 이미 진행 중인 OCR 작업(OcrResultDto)이 있다면 Model 에 올려서 View 에서 그대로 렌더링한다.
-     *   (예: 새로고침 또는 다른 페이지 다녀온 경우에도 작업 상태 유지)
+     * (예: 새로고침 또는 다른 페이지 다녀온 경우에도 작업 상태 유지)
      */
+    @GetMapping("/ppal")
+    public String ppal() {
+        return "ocr/public_global"; // templates/ocr/ppublic_global.html
+    }
+
+
     @GetMapping
     public String showOcrConsole(Model model, HttpSession session) {
 

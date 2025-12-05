@@ -4,6 +4,8 @@ import com.example.bboo_technology.DTO.TranslationDto;
 import com.example.bboo_technology.Service.Ocrservice.OcrAiGptServiceImpl;
 import com.example.bboo_technology.enums.TranslationLevel;
 import lombok.RequiredArgsConstructor;
+import org.apache.catalina.mapper.Mapper;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +19,7 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 public class GptTranslationService {
+
 
     /**
      * 번역 전용 temperature.

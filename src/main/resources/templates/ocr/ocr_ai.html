@@ -117,11 +117,6 @@
                     OCR 콘솔
                 </a>
 
-                <a class="list-group-item list-group-item-action"
-                   th:href="@{/ocr/translate}">
-                    번역 도구 (추후 예정)
-                </a>
-
                 <a class="list-group-item list-group-item-action active"
                    aria-current="true"
                    th:href="@{/ocr/ai}">
@@ -130,8 +125,15 @@
 
                 <a class="list-group-item list-group-item-action"
                    th:href="@{/ocr/ai/history}">
-                    AI 히스토리 (추후 예정)
+                    AI_EXCEL_히스토리
                 </a>
+
+                <a class="list-group-item list-group-item-action"
+                   th:href="@{/api/stt/file}">
+                    STT 변환 (음성_텍스트변환)
+                </a>
+
+
             </div>
         </div>
 

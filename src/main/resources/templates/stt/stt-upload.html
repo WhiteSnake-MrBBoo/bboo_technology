@@ -69,10 +69,13 @@
 <body>
 
 <div class="stt-container">
+    <!--메인 헤더 부분-->
+    <div class="text-center mb-4">
+        <a href="http://localhost:9001/ocr" class="btn btn-lg btn-primary shadow-sm fw-bold">
+            <i class="bi bi-house-door-fill me-2"></i> MAIN 링크: http://localhost:9001/ocr
+        </a>
+    </div>
     <div class="card stt-card">
-        <!-- =============================
-             카드 헤더
-             ============================= -->
         <div class="card-header stt-card-header bg-white">
             <h5 class="mb-0">STT 테스트 업로드</h5>
             <p class="mb-0 text-muted small">
@@ -81,25 +84,15 @@
             </p>
         </div>
 
-        <!-- =============================
-             카드 바디 - 업로드 폼
-             ============================= -->
         <div class="card-body">
-
-            <!--
-                (중요) action 경로:
-                - POST /api/stt/file
-                - Controller: SttController.transcribeFile(...)
-            -->
             <form
                     method="post"
                     action="/api/stt/file"
                     enctype="multipart/form-data"
                     class="needs-validation"
             >
-                <!-- 1) 오디오 파일 입력 -->
                 <div class="mb-3">
-                    <label for="file" class="form-label">오디오 파일</label>
+                    <label for="file" class="form-label">오디오 파일 (WAV/MP3)최대20MB</label>
                     <input
                             type="file"
                             class="form-control"
@@ -113,7 +106,6 @@
                     </div>
                 </div>
 
-                <!-- 2) 세션 ID (옵션) -->
                 <div class="mb-3">
                     <label for="sessionId" class="form-label">세션 ID (옵션)</label>
                     <input
@@ -128,7 +120,6 @@
                     </div>
                 </div>
 
-                <!-- 3) 언어 힌트 (옵션) -->
                 <div class="mb-3">
                     <label for="language" class="form-label">언어 힌트 (옵션)</label>
                     <input
@@ -143,7 +134,6 @@
                     </div>
                 </div>
 
-                <!-- 4) 전송 버튼 -->
                 <div class="d-flex justify-content-between align-items-center">
                     <button type="submit" class="btn btn-primary">
                         STT 변환 실행
@@ -156,11 +146,6 @@
             </form>
         </div>
 
-        <!-- =============================
-             (선택) 카드 푸터 - 결과 안내 영역
-             - 현재는 서버 응답 JSON 이 그대로 브라우저에 표시되지만,
-               추후 Ajax로 응답을 받아 아래 영역에 뿌려줄 수 있음.
-             ============================= -->
         <div class="card-footer bg-white">
             <p class="mb-2 small text-muted">
                 추후 계획:
@@ -171,16 +156,9 @@
                 <li>Whisper Stub → 실제 OpenAI Whisper / Local Python STT 교체</li>
             </ul>
 
-            <!-- TODO: 나중에 JS로 응답 바인딩해서 사용하는 영역 -->
             <div class="mt-3">
                 <label class="form-label small">응답 결과 (향후 JS 바인딩용)</label>
                 <div class="result-box">
-                    <!--
-                        TODO:
-                        - 현재는 단순 정적 영역.
-                        - 추후 JS로 /api/stt/file 응답(JSON)을 받아서
-                          transcript / message 등을 여기 출력.
-                    -->
                     (현재는 폼 전송 후 브라우저에서 JSON 응답을 직접 확인하세요.)
                 </div>
             </div>
