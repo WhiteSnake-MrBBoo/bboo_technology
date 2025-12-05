@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR AI 활용 스튜디오</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+            crossorigin="anonymous">
+
+    <style>
+        /* =================================
+           Google Material 3 Color Tokens
+           ================================= */
+        :root {
+            --md-sys-color-primary: #0b57d0;
+            --md-sys-color-on-primary: #ffffff;
+            --md-sys-color-primary-container: #d3e3fd;
+            --md-sys-color-on-primary-container: #041e49;
+            --md-sys-color-background: #f0f4f9;
+            --md-sys-color-surface: #ffffff;
+            --md-sys-color-surface-container: #f3f6fc;
+            --md-sys-color-outline: #747775;
+            --md-sys-color-outline-variant: #c4c7c5;
+
+            --border-radius-lg: 24px;
+            --border-radius-md: 12px;
+            --border-radius-sm: 8px;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--md-sys-color-background);
+            color: #1f1f1f;
+        }
+
+        /* =================================
+           Layout & Header
+           ================================= */
+        header {
+            padding: 12px 24px;
+            margin-bottom: 10px;
+            background-color: var(--md-sys-color-surface);
+            border-bottom: 1px solid var(--md-sys-color-outline-variant);
+        }
+        .app-logo {
+            font-size: 22px;
+            color: #444746;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+        }
+        .app-logo i {
+            color: var(--md-sys-color-primary);
+            font-size: 24px;
+            margin-right: 12px;
+        }
+        .ai-layout .row > div:not(.google-card) {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+
+        /* Layout Overrides: Remove old background/border */
+        .ai-sidebar-category, .ai-doc-sidebar {
+            background-color: transparent !important;
+            border-right: none !important;
+            border-bottom: none !important;
+        }
+
+        /* =================================
+           Sidebar Navigation (Gmail Style)
+           ================================= */
+        .nav-google .nav-link {
+            color: #444746;
+            padding: 10px 16px 10px 16px;
+            border-radius: 24px; /* Fully rounded */
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+        .nav-google .nav-link:hover {
+            background-color: #f2f2f2;
+            color: #1f1f1f;
+        }
+        .nav-google .nav-link.active {
+            background-color: #c2e7ff; /* Google Active Blue */
+            color: #001d35;
+            font-weight: 600;
+        }
+        .nav-google .nav-link i {
+            font-size: 18px;
+            width: 24px;
+            margin-right: 12px;
+            text-align: center;
+        }
+
+        /* =================================
+           Cards & List Items
+           ================================= */
+        .google-card {
+            background-color: var(--md-sys-color-surface);
+            border-radius: var(--border-radius-lg);
+            padding: 24px;
+            height: 100%;
+            border: 1px solid var(--md-sys-color-outline-variant); /* Subtle border */
+            box-shadow: none;
+        }
+
+        /* Document List Items */
+        .ai-doc-list-item {
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            border-radius: var(--border-radius-sm);
+            transition: background-color 0.2s, border-color 0.2s;
+            border: 1px solid transparent;
+            text-decoration: none; /* Remove underline */
+            color: #1f1f1f; /* Default text color */
+        }
+        .ai-doc-list-item:hover {
+            background-color: var(--md-sys-color-surface-container);
+        }
+        .ai-doc-list-item.active {
+            background-color: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            border: 1px solid var(--md-sys-color-primary);
+            font-weight: 500;
+        }
+        .ai-doc-list-item.active .text-muted, .ai-doc-list-item.active .badge {
+            color: var(--md-sys-color-on-primary-container) !important;
+        }
+        .ai-doc-list {
+            max-height: calc(100vh - 350px);
+            overflow-y: auto;
+        }
+        .ai-doc-list .badge {
+            font-weight: normal;
+        }
+
+        /* =================================
+           Typography & Headings
+           ================================= */
+        .category-title, .ai-sidebar-header {
+            color: #1f1f1f;
+            font-weight: 500;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+        .ai-main-header-title {
+            font-size: 1.5rem;
+            font-weight: 500;
+        }
+        .ai-meta {
+            font-size: 0.85rem;
+            color: #747775;
+        }
+
+        /* =================================
+           Buttons
+           ================================= */
+        .btn-google {
+            border-radius: 20px; /* Pill shape */
+            font-weight: 500;
+            font-size: 14px;
+            padding: 8px 20px;
+            transition: box-shadow 0.2s, background-color 0.2s;
+        }
+        .btn-google-primary {
+            background-color: var(--md-sys-color-primary);
+            color: white;
+            border: none;
+        }
+        .btn-google-primary:hover {
+            background-color: #0842a0;
+            box-shadow: 0 1px 3px 1px rgba(0,0,0,0.15);
+            color: white;
+        }
+        .btn-google-filled-tonal {
+            background-color: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            border: none;
+        }
+        .btn-google-filled-tonal:hover {
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            background-color: #c0d8f7;
+        }
+        .btn-google-text {
+            background-color: transparent;
+            color: var(--md-sys-color-primary);
+            border: none;
+            padding: 8px 12px;
+        }
+        .btn-google-text:hover {
+            background-color: #d3e3fd;
+            color: var(--md-sys-color-on-primary-container);
+        }
+
+        /* =================================
+           Inputs & Tabs
+           ================================= */
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid var(--md-sys-color-outline-variant);
+            padding: 10px 14px;
+            font-size: 14px;
+            background-color: var(--md-sys-color-surface-container);
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--md-sys-color-primary);
+            box-shadow: 0 0 0 2px rgba(11, 87, 208, 0.2);
+            outline: none;
+            background-color: var(--md-sys-color-surface);
+        }
+        .ai-ocr-text, .ai-gpt-result {
+            min-height: 180px;
+            resize: vertical;
+            background-color: var(--md-sys-color-surface-container) !important;
+            border-radius: var(--border-radius-md);
+        }
+
+        .nav-tabs .nav-link {
+            color: #444746;
+            border: none;
+            border-bottom: 3px solid transparent;
+            padding: 10px 16px;
+            margin-right: 4px;
+            transition: all 0.2s;
+        }
+        .nav-tabs .nav-link:hover {
+            background-color: var(--md-sys-color-surface-container);
+        }
+        .nav-tabs .nav-link.active {
+            color: var(--md-sys-color-primary);
+            border-bottom-color: var(--md-sys-color-primary);
+            background-color: transparent;
+            font-weight: 500;
+        }
+        /* Fix default Bootstrap tab padding */
+        .tab-content {
+            padding-top: 16px !important;
+        }
+        .ai-sidebar-header {
+            font-weight: 500 !important;
+        }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="d-flex justify-content-between align-items-center">
+        <a class="app-logo" th:href="@{/ocr}">
+            <i class="fa-solid fa-brain"></i> <span>OCR AI 활용 스튜디오</span>
+        </a>
+        <div class="d-flex gap-2 align-items-center">
+            <button type="button" class="btn btn-light rounded-circle" style="width: 40px; height: 40px;" disabled>
+                <i class="fa-solid fa-gear text-muted"></i>
+            </button>
+
+            <button type="button"
+                    class="btn btn-google-primary d-lg-none"
+                    id="mobileAiSidebarToggle"
+                    aria-controls="mobileAiSidebar"
+                    style="width: 40px; height: 40px; padding: 0;">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 14px;">
+                J
+            </div>
+        </div>
+    </div>
+</header>
+
+
+<div class="container-fluid ai-layout px-4">
+    <div class="row g-4">
+
+        <div class="col-lg-2 ai-sidebar-category d-none d-lg-block">
+            <div class="p-3">
+                <div class="category-title">📚 카테고리</div>
+
+                <nav class="nav-google d-flex flex-column small">
+                    <a class="nav-link" th:href="@{/ocr}">
+                        <i class="fa-solid fa-crop-simple"></i> OCR 콘솔
+                    </a>
+
+                    <a class="nav-link active"
+                       aria-current="true"
+                       th:href="@{/ocr/ai}">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> OCR AI 활용
+                    </a>
+
+                    <a class="nav-link" th:href="@{/ocr/ai/history}">
+                        <i class="fa-regular fa-file-excel"></i> AI_EXCEL_히스토리
+                    </a>
+
+                    <a class="nav-link" th:href="@{/api/stt/file}">
+                        <i class="fa-solid fa-microphone"></i> STT 변환
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-10">
+            <div class="row g-4">
+
+                <div class="col-12 col-xl-4 ai-doc-sidebar">
+                    <div class="google-card p-4 h-100">
+                        <div class="ai-sidebar-header d-flex align-items-center mb-3">
+                            <i class="fa-solid fa-folder-open me-2 text-primary"></i>
+                            <span class="me-2">OCR 문서 목록</span>
+                        </div>
+
+                        <form class="mb-4">
+                            <div class="input-group input-group-sm mb-2">
+                                <input type="text" class="form-control" placeholder="제목 또는 파일명 검색 (추후 기능)">
+                                <button class="btn btn-google-filled-tonal btn-sm" type="button">
+                                    <i class="fa-solid fa-search"></i>
+                                </button>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <select class="form-select form-select-sm">
+                                    <option>전체 타입</option>
+                                    <option>이미지</option>
+                                    <option>PDF</option>
+                                </select>
+                                <select class="form-select form-select-sm">
+                                    <option>기간: 전체</option>
+                                    <option>오늘</option>
+                                    <option>최근 7일</option>
+                                    <option>최근 30일</option>
+                                </select>
+                            </div>
+                        </form>
+
+                        <div class="ai-doc-list list-group small">
+
+                            <div th:if="${#lists.isEmpty(ocrList)}"
+                                 class="text-muted small p-2">
+                                저장된 OCR 문서가 없습니다.<br>
+                                먼저 OCR 콘솔에서 문서를 업로드하고 저장해 주세요.
+                            </div>
+
+                            <a th:each="item : ${ocrList}"
+                               th:href="@{/ocr/ai(id=${item.id})}"
+                               class="ai-doc-list-item d-block"
+
+                               th:classappend="${selectedOcr != null and item.id == selectedOcr.id} ? ' active'">
+                                <div class="d-flex justify-content-between">
+                                    <div class="text-truncate me-2">
+                                        <div class="fw-semibold text-truncate"
+                                             th:text="${item.title}">[샘플] 상품기술서 제목</div>
+                                        <div class="text-muted small text-truncate"
+                                             th:text="${item.originalFileName}">sample_file.pdf</div>
+                                    </div>
+                                    <div class="text-end flex-shrink-0 small mt-1">
+                                        <span class="badge bg-light text-dark border">요약</span><br>
+                                        <span class="badge bg-light text-dark border">멘트</span>
+                                    </div>
+                                </div>
+                                <div class="mt-1 ai-meta">
+                                    <span th:text="${item.createdAt}">2025-11-22</span>
+                                    ·
+                                    <span th:text="${item.fileType}">PDF</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-xl-8 ai-main">
+                    <div class="google-card p-4 h-100">
+
+                        <input type="hidden" id="selectedOcrId"
+                               th:if="${selectedOcr != null}"
+                               th:value="${selectedOcr.id}">
+
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+
+                            <div th:if="${selectedOcr != null}">
+                                <div class="ai-main-header-title mb-1">
+                                    <i class="fa-solid fa-file-lines me-2 text-secondary"></i>
+                                    <span th:text="${selectedOcr.title}">[샘플] 상품기술서 제목</span>
+                                </div>
+                                <div class="ai-meta">
+                                    파일명:
+                                    <span th:text="${selectedOcr.originalFileName}">sample.pdf</span>
+                                    ·
+                                    <span th:text="${selectedOcr.fileType}">PDF</span>
+                                </div>
+                            </div>
+
+                            <div th:if="${selectedOcr == null}">
+                                <div class="ai-main-header-title mb-1">
+                                    <i class="fa-regular fa-circle-question me-2 text-muted"></i>
+                                    현재 선택된 OCR 문서가 없습니다.
+                                </div>
+                                <div class="ai-meta">
+                                    좌측에서 문서를 선택하거나 OCR 콘솔에서 새 문서를 저장해 주세요.
+                                </div>
+                            </div>
+
+                            <div class="text-end flex-shrink-0">
+                                <a class="btn btn-google btn-google-text btn-sm mb-1"
+                                   th:href="@{/ocr}">
+                                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> OCR 콘솔로 이동
+                                </a>
+                                <div class="ai-meta">
+                                    저장 상태:
+                                    <span th:classappend="${selectedOcr != null and selectedOcr.saved} ? 'text-success fw-bold' : 'text-danger'">
+                                        <span th:if="${selectedOcr != null and selectedOcr.saved}">저장됨</span>
+                                        <span th:unless="${selectedOcr != null and selectedOcr.saved}">저장 안됨</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4" th:if="${selectedOcr != null}">
+                            <label class="form-label fw-semibold small text-muted">원본 OCR 텍스트 (AI 참고용)</label>
+                            <textarea class="form-control ai-ocr-text" readonly
+                                      th:text="${selectedOcr.editedText}"></textarea>
+                            <div class="form-text small text-muted">
+                                ※ 이 영역은 GPT가 참고하는 원본 텍스트입니다. 수정은 OCR 콘솔에서 해 주세요.
+                            </div>
+                        </div>
+
+                        <div class="mb-4" th:if="${selectedOcr == null}">
+                            <label class="form-label fw-semibold small text-muted">원본 OCR 텍스트</label>
+                            <div class="form-control ai-ocr-text bg-light text-muted d-flex align-items-center justify-content-center">
+                                문서를 선택하면 OCR 텍스트가 표시됩니다.
+                            </div>
+                        </div>
+
+                        <ul class="nav nav-tabs" id="gptTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="summary-tab" data-bs-toggle="tab"
+                                        data-bs-target="#summary-panel" type="button" role="tab">
+                                    <i class="fa-solid fa-book-open-reader me-1"></i> 3-1. 상품 정보 요약
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="host-tab" data-bs-toggle="tab"
+                                        data-bs-target="#host-panel" type="button" role="tab">
+                                    <i class="fa-solid fa-comment-dots me-1"></i> 3-2. 쇼호스트 멘트
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="marketing-tab" data-bs-toggle="tab"
+                                        data-bs-target="#marketing-panel" type="button" role="tab">
+                                    <i class="fa-solid fa-bullhorn me-1"></i> 3-3. 마케팅 &amp; 자막 포인트
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content pt-3" id="gptTabContent">
+
+                            <div class="tab-pane fade show active" id="summary-panel" role="tabpanel">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0 fw-semibold">AI 요약 결과</h6>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-google btn-google-primary btn-sm" type="button"
+                                                id="btn-summary-generate" th:disabled="${selectedOcr == null}">
+                                            <i class="fa-solid fa-bolt me-1"></i> AI 요약 생성
+                                        </button>
+                                        <button class="btn btn-google btn-google-filled-tonal btn-sm" type="button"
+                                                id="btn-summary-save" th:disabled="${selectedOcr == null}">
+                                            <i class="fa-regular fa-floppy-disk me-1"></i> 이 결과 저장
+                                        </button>
+                                    </div>
+                                </div>
+                                <textarea class="form-control ai-gpt-result"
+                                          id="summaryResult"
+                                          placeholder="AI 요약 결과가 여기에 표시됩니다."></textarea>
+                            </div>
+
+                            <div class="tab-pane fade" id="host-panel" role="tabpanel">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0 fw-semibold">AI 쇼호스트 멘트 스크립트</h6>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-google btn-google-primary btn-sm" type="button"
+                                                id="btn-host-generate" th:disabled="${selectedOcr == null}">
+                                            <i class="fa-solid fa-bolt me-1"></i> AI 멘트 생성
+                                        </button>
+                                        <button class="btn btn-google btn-google-filled-tonal btn-sm" type="button"
+                                                id="btn-host-save" th:disabled="${selectedOcr == null}">
+                                            <i class="fa-regular fa-floppy-disk me-1"></i> 이 결과 저장
+                                        </button>
+                                    </div>
+                                </div>
+                                <textarea class="form-control ai-gpt-result"
+                                          id="hostResult"
+                                          placeholder="AI 멘트 스크립트가 여기에 표시됩니다."></textarea>
+                            </div>
+
+
+                            <div class="tab-pane fade" id="marketing-panel" role="tabpanel">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0 fw-semibold">AI 마케팅 포인트 &amp; 자막 문구</h6>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-google btn-google-primary btn-sm" type="button"
+                                                id="btn-marketing-generate" th:disabled="${selectedOcr == null}">
+                                            <i class="fa-solid fa-bolt me-1"></i> AI 포인트 생성
+                                        </button>
+                                        <button class="btn btn-google btn-google-filled-tonal btn-sm" type="button"
+                                                id="btn-marketing-save" th:disabled="${selectedOcr == null}">
+                                            <i class="fa-regular fa-floppy-disk me-1"></i> 이 결과 저장
+                                        </button>
+                                    </div>
+                                </div>
+                                <textarea class="form-control ai-gpt-result"
+                                          id="marketingResult"
+                                          placeholder="AI 마케팅 포인트가 여기에 표시됩니다."></textarea>
+                            </div>
+
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="mobileAiSidebar" aria-labelledby="mobileAiSidebarLabel">
+    <div class="offcanvas-header bg-white border-bottom">
+        <h5 class="offcanvas-title fw-bold" id="mobileAiSidebarLabel">
+            <i class="fa-solid fa-brain text-primary me-2"></i> OCR AI Menu
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body px-3">
+        <div class="category-title">📚 카테고리</div>
+
+        <nav class="nav-google d-flex flex-column small">
+            <a class="nav-link" th:href="@{/ocr}">
+                <i class="fa-solid fa-crop-simple"></i> OCR 콘솔
+            </a>
+
+            <a class="nav-link active"
+               aria-current="true"
+               th:href="@{/ocr/ai}">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> OCR AI 활용
+            </a>
+
+            <a class="nav-link" th:href="@{/ocr/ai/history}">
+                <i class="fa-regular fa-file-excel"></i> AI_EXCEL_히스토리
+            </a>
+
+            <a class="nav-link" th:href="@{/api/stt/file}">
+                <i class="fa-solid fa-microphone"></i> STT 변환
+            </a>
+        </nav>
+    </div>
+</div>
+
+
+<script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // -----------------------------
+        // [수정된 부분] Offcanvas 초기화 및 토글 로직
+        // data-* 속성 대신 JS로 명시적 제어를 통해 충돌 방지
+        // -----------------------------
+        const offcanvasElement = document.getElementById('mobileAiSidebar');
+        const offcanvasTrigger = document.getElementById('mobileAiSidebarToggle');
+
+        if (offcanvasElement && offcanvasTrigger) {
+            // Offcanvas 인스턴스 생성
+            const offcanvas = new bootstrap.Offcanvas(offcanvasElement);
+
+            // 토글 버튼 클릭 리스너 등록: show() 메서드 사용
+            offcanvasTrigger.addEventListener('click', (e) => {
+                e.preventDefault(); // 기본 이벤트 방지 (필요 시)
+                offcanvas.show(); // Offcanvas 표시
+            });
+
+            // Offcanvas 내부 링크 클릭 시 닫기 (UX 개선)
+            const offcanvasLinks = offcanvasElement.querySelectorAll('.nav-link');
+            offcanvasLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    offcanvas.hide();
+                });
+            });
+        }
+
+
+        // -----------------------------
+        // 공통: 현재 선택된 OCR 문서 ID (기존 로직 유지)
+        // -----------------------------
+        const selectedIdInput = document.getElementById('selectedOcrId');
+        let currentOcrId = selectedIdInput ? selectedIdInput.value : "";
+
+        // -----------------------------
+        // 1) AI 호출 공통 함수 (요약/멘트/마케팅 생성) (기존 로직 유지)
+        // -----------------------------
+        function callAi(endpoint, textareaId) {
+            const textarea = document.getElementById(textareaId);
+            const generateBtn = document.getElementById('btn-' + textareaId.replace('Result', '') + '-generate');
+
+
+            if (!currentOcrId) {
+                alert("좌측에서 먼저 OCR 문서를 선택해 주세요.");
+                return;
+            }
+            if (!textarea) {
+                console.error("결과 영역 textarea를 찾을 수 없습니다: " + textareaId);
+                return;
+            }
+
+            // 로딩 상태 표시
+            textarea.value = "AI 요청 중입니다...\n잠시만 기다려 주세요.";
+            if (generateBtn) {
+                generateBtn.disabled = true;
+                generateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> 생성 중...';
+            }
+
+
+            fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+                },
+                body: "id=" + encodeURIComponent(currentOcrId)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("HTTP 상태코드: " + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        textarea.value = data.content;
+                    } else {
+                        textarea.value = "";
+                        alert(data.message || "AI 처리 중 오류가 발생했습니다.");
+                    }
+                })
+                .catch(error => {
+                    console.error("AI 요청 실패:", error);
+                    textarea.value = "";
+                    alert("AI 요청 중 통신 오류가 발생했습니다.");
+                })
+                .finally(() => {
+                    // 버튼 상태 복구
+                    if (generateBtn) {
+                        const iconClass = 'fa-solid fa-bolt'; // 통일
+                        generateBtn.disabled = false;
+                        generateBtn.innerHTML = `<i class="${iconClass} me-1"></i> AI ${textareaId.includes('summary') ? '요약' : textareaId.includes('host') ? '멘트' : '포인트'} 생성`;
+                    }
+                });
+        }
+
+        // ▶ 요약 생성
+        const btnSummaryGenerate = document.getElementById("btn-summary-generate");
+        if (btnSummaryGenerate) {
+            btnSummaryGenerate.addEventListener("click", function () {
+                callAi("/ocr/ai/summary", "summaryResult");
+            });
+        }
+
+        // ▶ 쇼호스트 멘트 생성
+        const btnHostGenerate = document.getElementById("btn-host-generate");
+        if (btnHostGenerate) {
+            btnHostGenerate.addEventListener("click", function () {
+                callAi("/ocr/ai/host", "hostResult");
+            });
+        }
+
+        // ▶ 마케팅 포인트 생성
+        const btnMarketingGenerate = document.getElementById("btn-marketing-generate");
+        if (btnMarketingGenerate) {
+            btnMarketingGenerate.addEventListener("click", function () {
+                callAi("/ocr/ai/marketing", "marketingResult");
+            });
+        }
+
+        // -----------------------------
+        // 2) AI 결과 저장 공통 함수 (기존 로직 유지)
+        // -----------------------------
+        async function saveAiResult(type) {
+            try {
+                if (!currentOcrId) {
+                    alert("먼저 왼쪽에서 OCR 문서를 선택해 주세요.");
+                    return;
+                }
+
+                let textareaId;
+                switch (type) {
+                    case "SUMMARY":
+                        textareaId = "summaryResult";
+                        break;
+                    case "HOST_SCRIPT":
+                        textareaId = "hostResult";
+                        break;
+                    case "MARKETING_POINTS":
+                        textareaId = "marketingResult";
+                        break;
+                    default:
+                        alert("알 수 없는 결과 타입입니다: " + type);
+                        return;
+                }
+
+                const textarea = document.getElementById(textareaId);
+                if (!textarea) {
+                    alert("저장할 텍스트 영역을 찾을 수 없습니다. (id=" + textareaId + ")");
+                    return;
+                }
+
+                const content = textarea.value.trim();
+                if (!content) {
+                    alert("저장할 내용이 비어 있습니다.");
+                    return;
+                }
+
+                const saveBtn = document.getElementById('btn-' + textareaId.replace('Result', '') + '-save');
+                if (saveBtn) {
+                    saveBtn.disabled = true;
+                    saveBtn.innerHTML = '<i class="fa-solid fa-sync-alt fa-spin me-1"></i> 저장 중...';
+                }
+
+                const params = new URLSearchParams();
+                params.append("id", currentOcrId);
+                params.append("type", type);
+                params.append("content", content);
+
+                const response = await fetch("/ocr/ai/save", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+                    },
+                    body: params.toString()
+                });
+
+                if (!response.ok) {
+                    alert("서버와 통신 중 오류가 발생했습니다. (status: " + response.status + ")");
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert("저장 완료! (ID: " + data.id + ")");
+                } else {
+                    alert("저장 실패: " + (data.message || "알 수 없는 오류"));
+                }
+
+            } catch (err) {
+                console.error("AI 결과 저장 중 예외 발생", err);
+                alert("AI 결과 저장 중 예외가 발생했습니다. 콘솔 로그를 확인해 주세요.");
+            } finally {
+                 if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fa-regular fa-floppy-disk me-1"></i> 이 결과 저장';
+                }
+            }
+        }
+
+        // ▶ 각 탭별 "이 결과 저장" 버튼에 핸들러 연결
+        const btnSaveSummary = document.getElementById("btn-summary-save");
+        if (btnSaveSummary) {
+            btnSaveSummary.addEventListener("click", function () {
+                saveAiResult("SUMMARY");
+            });
+        }
+
+        const btnSaveHostScript = document.getElementById("btn-host-save");
+        if (btnSaveHostScript) {
+            btnSaveHostScript.addEventListener("click", function () {
+                saveAiResult("HOST_SCRIPT");
+            });
+        }
+
+        const btnSaveMarketingPoints = document.getElementById("btn-marketing-save");
+        if (btnSaveMarketingPoints) {
+            btnSaveMarketingPoints.addEventListener("click", function () {
+                saveAiResult("MARKETING_POINTS");
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
