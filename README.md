@@ -67,9 +67,7 @@ T-커머스/홈쇼핑에서
 > 📑 OCR 상세 설계 & 코드 흐름: [OCR Module](./docs/ocr-module.md)
 
 
-https://github.com/user-attachments/assets/885341a2-c9c6-4946-9444-ef0b963aaf03
-
-
+https://github.com/user-attachments/assets/ce36ba50-f471-4911-8ef6-831a1800e233
 
 
 [![OCR_모듈_상세보기](https://img.shields.io/badge/OCR_모듈_상세보기-4CAF50?style=for-the-badge&logo=readme&logoColor=white)](docs/ocr-module.md)
@@ -102,7 +100,8 @@ https://github.com/user-attachments/assets/885341a2-c9c6-4946-9444-ef0b963aaf03
 > 🤖 프롬프트 설계, 모델 설정, WebClient 호출 구조: [GPT AI Module](./docs/gpt-ai-module.md)
 
 
-https://github.com/user-attachments/assets/eac7f309-2c23-478a-af91-c95d6a8d3ae5
+https://github.com/user-attachments/assets/64e37fe6-0903-46f8-b59e-f74d01f9dce0
+
 
 
 [![GPT_AI_모듈_상세보기](https://img.shields.io/badge/GPT_AI_모듈_상세보기-9C27B0?style=for-the-badge&logo=openai&logoColor=white)](docs/gpt-ai-module.md)
