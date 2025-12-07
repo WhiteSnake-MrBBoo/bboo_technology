@@ -45,8 +45,9 @@ public class OcrAiHistoryController {
 
         log.info("AI History 화면 요청 - id={}, listSize={}", id, historyList.size());
 
-        // 템플릿: templates/ocr/ocr_ai_history.html
-        return "ocr/ocr_ai_history";
+        // 템플릿: templates/ocr/ocr_ai_excel.html
+//        return "ocr/ocr_ai_history";
+        return "ocr/ocr_ai_excelgoogl";
     }
 
     /**
@@ -93,7 +94,7 @@ public class OcrAiHistoryController {
         excelService.writeGptHistoryToExcel(selectedList, response);
     }
     /**
-     * ocr_ai_history.html modal : 선택 영역별 컬럼 엑셀로 내보기
+     * ocr_ai_excel.html modal : 선택 영역별 컬럼 엑셀로 내보기
      * */
 // Excel 옵션 기반 다운로드
     @PostMapping("/history/export-with-options")

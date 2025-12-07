@@ -191,322 +191,370 @@
 
 <body>
 
-    <header class="app-bar shadow-sm">
-        <div class="logo-area">
-            <button class="btn btn-light rounded-circle d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-            
-            <i class="fa-brands fa-google-drive logo-icon"></i> <span>OCR Console</span>
-        </div>
-        
-        <div class="d-flex align-items-center gap-2">
-             <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 14px;">
-                J
-             </div>
-        </div>
-    </header>
+<header class="app-bar shadow-sm">
+    <div class="logo-area">
+        <button class="btn btn-light rounded-circle d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
+            <i class="fa-solid fa-bars"></i>
+        </button>
 
-    <div class="container-fluid px-0">
-        <div class="row g-0">
-            
-            <aside class="col-lg-2 d-none d-lg-block py-3">
-                <div class="px-3 mb-4">
-                    <button class="btn btn-light shadow-sm py-3 px-4 rounded-4 fw-bold text-muted d-flex align-items-center gap-2" style="background: white;">
-                        <i class="fa-solid fa-plus text-dark fa-lg"></i> New Upload
-                    </button>
-                </div>
-
-                <nav class="nav-drawer d-flex flex-column">
-                    <a href="http://localhost:9001/ocr" class="nav-link active">
-                        <i class="fa-solid fa-hard-drive"></i> 내 드라이브 (OCR)
-                    </a>
-                    <a href="http://localhost:9001/ocr/ai" class="nav-link">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> AI 변환기
-                    </a>
-                    <a href="http://localhost:9001/ocr/ai/history" class="nav-link">
-                        <i class="fa-regular fa-clock"></i> 최근 문서
-                    </a>
-                    <a href="http://localhost:9001/api/stt/file" class="nav-link">
-                        <i class="fa-solid fa-microphone-lines"></i> 음성 텍스트 변환
-                    </a>
-                </nav>
-            </aside>
-
-            <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
-                <div class="offcanvas-header ps-4 pt-3">
-                    <h5 class="offcanvas-title fw-bold text-secondary" id="mobileSidebarLabel">
-                        <i class="fa-brands fa-google me-2"></i>Menu
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                </div>
-                <div class="offcanvas-body px-0">
-                    <nav class="nav-drawer d-flex flex-column mt-2">
-                        <a href="http://localhost:9001/ocr" class="nav-link active">
-                            <i class="fa-solid fa-hard-drive"></i> 내 드라이브 (OCR)
-                        </a>
-                        <a href="http://localhost:9001/ocr/ai" class="nav-link">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> AI 변환기
-                        </a>
-                        <a href="http://localhost:9001/ocr/ai/history" class="nav-link">
-                            <i class="fa-regular fa-clock"></i> 최근 문서
-                        </a>
-                        <a href="http://localhost:9001/api/stt/file" class="nav-link">
-                            <i class="fa-solid fa-microphone-lines"></i> 음성 텍스트 변환
-                        </a>
-                    </nav>
-                </div>
-            </div>
-
-            <main class="col-12 col-lg-10 p-3 p-lg-4">
-                <div class="row g-4 h-100">
-
-                    <section class="col-12 col-xl-5">
-                        <div class="material-card d-flex flex-column gap-3">
-                            <div>
-                                <h2 class="h5 fw-bold mb-1">파일 업로드</h2>
-                                <p class="text-muted small">이미지 또는 PDF에서 텍스트를 추출합니다.</p>
-                            </div>
-
-                            <form id="ocrUploadForm" th:action="@{/ocr/upload}" method="post" enctype="multipart/form-data">
-                                <div class="upload-wrapper p-4 text-center mb-3">
-                                    <i class="fa-solid fa-cloud-arrow-up text-primary fa-3x mb-3"></i>
-                                    <p class="small text-muted mb-3">여기에 파일을 드래그하거나 클릭하여 선택하세요.</p>
-                                    
-                                    <input class="form-control" type="file" id="fileInput" name="file" accept="image/*,application/pdf" style="max-width: 80%; margin: 0 auto;">
-                                    
-                                    <div class="mt-2 small fw-bold text-primary" id="fileInfoText"></div>
-                                </div>
-
-                                <div class="d-flex justify-content-end">
-                                    <button type="submit" class="btn btn-m3 btn-m3-primary shadow-sm">
-                                        <i class="fa-solid fa-bolt"></i> 텍스트 추출 실행
-                                    </button>
-                                </div>
-                            </form>
-
-                            <div th:if="${errorMessage}" class="alert alert-danger rounded-4 border-0 bg-danger-subtle text-danger small">
-                                <i class="fa-solid fa-triangle-exclamation me-2"></i><span th:text="${errorMessage}">Error</span>
-                            </div>
-                            <div th:if="${infoMessage}" class="alert alert-primary rounded-4 border-0 bg-primary-subtle text-primary small">
-                                <i class="fa-solid fa-circle-info me-2"></i><span th:text="${infoMessage}">Info</span>
-                            </div>
-
-                            <div class="flex-grow-1 d-flex flex-column mt-2">
-                                <label class="small fw-bold text-muted mb-2 ps-1">PREVIEW</label>
-                                <div class="preview-box flex-grow-1 position-relative">
-                                    <img id="imagePreview" src="" alt="Preview" class="img-fluid d-none" style="max-height: 280px;">
-                                    <embed id="pdfPreview" type="application/pdf" src="" class="w-100 h-100 d-none" style="min-height: 280px;">
-                                    
-                                    <div id="previewPlaceholder" class="text-center text-muted opacity-50">
-                                        <i class="fa-regular fa-image fa-3x mb-2"></i>
-                                        <p class="small m-0">파일이 선택되지 않았습니다</p>
-                                    </div>
-                                </div>
-                                <div class="text-end mt-2 small text-muted" th:if="${ocrResult != null}">
-                                    <span th:if="${ocrResult.fileType == 'PDF'}">PDF · <span th:text="${ocrResult.pageCount}">0</span> Pages</span>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="col-12 col-xl-7">
-                        <div class="material-card">
-                            <form id="ocrSaveForm" th:action="@{/ocr/save}" method="post" class="d-flex flex-column h-100 gap-3">
-                                
-                                <div class="border-bottom pb-2">
-                                    <input type="text" id="ocrTitle" name="title" 
-                                           class="form-control border-0 fs-4 px-0 fw-normal" 
-                                           placeholder="제목 없는 문서" 
-                                           th:value="${ocrResult != null} ? ${ocrResult.title} : ''"
-                                           style="box-shadow: none; background: transparent;">
-                                </div>
-
-                                <div class="d-flex flex-wrap align-items-center gap-2 bg-light p-2 rounded-3">
-                                    <span class="badge bg-white text-dark border">번역 설정</span>
-                                    
-                                    <select class="form-select form-select-sm border-0" id="translateDirection" style="width: auto; background-color: transparent;">
-                                        <option value="KO_EN">한국어 → 영어</option>
-                                        <option value="EN_KO">영어 → 한국어</option>
-                                    </select>
-                                    
-                                    <div class="vr mx-1"></div>
-
-                                    <select class="form-select form-select-sm border-0" id="translateLevel" style="width: auto; background-color: transparent;">
-                                        <option value="BASIC">Basic</option>
-                                        <option value="PREMIUM" selected>Premium</option>
-                                        <option value="ECONOMY">Economy</option>
-                                    </select>
-
-                                    <button type="button" class="btn btn-sm btn-light border ms-auto text-primary fw-bold" id="translateBtn">
-                                        <i class="fa-solid fa-language me-1"></i> 번역하기
-                                    </button>
-                                </div>
-
-                                <div class="row g-3 flex-grow-1">
-                                    <div class="col-md-6 d-flex flex-column">
-                                        <label class="small text-muted fw-bold mb-2">원본 텍스트 (OCR)</label>
-                                        <textarea id="ocrText" name="ocrText" class="form-control doc-editor flex-grow-1 shadow-sm" 
-                                                  placeholder="추출된 텍스트가 여기에 표시됩니다..."
-                                                  th:text="${ocrResult != null} ? ${ocrResult.ocrText} : ''"></textarea>
-                                    </div>
-                                    
-                                    <div class="col-md-6 d-flex flex-column">
-                                        <label class="small text-muted fw-bold mb-2">번역 결과</label>
-                                        <textarea id="translatedText" class="form-control doc-editor flex-grow-1 shadow-sm" 
-                                                  style="background-color: #f8fbf8;"
-                                                  placeholder="번역 결과가 표시됩니다."
-                                                  th:text="${translation != null} ? ${translation.translatedText} : ''" readonly></textarea>
-                                        
-                                        <div class="text-end small text-muted mt-1 fst-italic" id="translateMetaInfo"
-                                             th:text="${translation != null} ? ${translation.sourceLang} + ' → ' + ${translation.targetLang} : ''"></div>
-                                    </div>
-                                </div>
-
-                                <div class="d-flex justify-content-between align-items-center pt-2">
-                                    <span class="small text-muted">
-                                        <i class="fa-solid fa-check-double me-1"></i> 모든 변경사항이 저장되지 않았습니다.
-                                    </span>
-                                    <button type="submit" class="btn btn-m3 btn-m3-primary shadow">
-                                        <i class="fa-regular fa-floppy-disk"></i> 드라이브에 저장
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </section>
-
-                </div>
-            </main>
-        </div>
+        <i class="fa-brands fa-google-drive logo-icon"></i> <span>OCR Console</span>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="d-flex align-items-center gap-2">
+        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 14px;">
+            J
+        </div>
+    </div>
+</header>
 
-    <script>
-        // 1. 파일 미리보기 로직
-        const fileInput = document.getElementById('fileInput');
-        const fileInfoText = document.getElementById('fileInfoText');
-        const imagePreview = document.getElementById('imagePreview');
-        const pdfPreview = document.getElementById('pdfPreview');
-        const previewPlaceholder = document.getElementById('previewPlaceholder');
+<div class="container-fluid px-0">
+    <div class="row g-0">
 
-        if (fileInput) {
-            fileInput.addEventListener('change', function (event) {
-                const file = event.target.files && event.target.files[0];
+        <aside class="col-lg-2 d-none d-lg-block py-3">
+            <div class="px-3 mb-4">
+                <button class="btn btn-light shadow-sm py-3 px-4 rounded-4 fw-bold text-muted d-flex align-items-center gap-2" style="background: white;">
+                    <i class="fa-solid fa-plus text-dark fa-lg"></i> New Upload
+                </button>
+            </div>
 
-                if (!file) {
-                    fileInfoText.textContent = '';
-                    imagePreview.classList.add('d-none');
-                    pdfPreview.classList.add('d-none');
-                    previewPlaceholder.classList.remove('d-none');
-                    imagePreview.src = '';
-                    pdfPreview.src = '';
+            <nav class="nav-drawer d-flex flex-column">
+                <a href="http://localhost:9001/ocr" class="nav-link active">
+                    <i class="fa-solid fa-hard-drive"></i> OCR Studio
+                </a>
+                <a href="http://localhost:9001/ocr/ai" class="nav-link">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> AI Converter
+                </a>
+                <a href="http://localhost:9001/ocr/ai/history" class="nav-link">
+                    <i class="fa-regular fa-clock"></i> Ai History Excel
+                </a>
+                <a href="http://localhost:9001/api/stt/file" class="nav-link">
+                    <i class="fa-solid fa-microphone-lines"></i> [STT] Voice to Text
+                </a>
+            </nav>
+        </aside>
+
+        <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
+            <div class="offcanvas-header ps-4 pt-3">
+                <h5 class="offcanvas-title fw-bold text-secondary" id="mobileSidebarLabel">
+                    <i class="fa-brands fa-google me-2"></i>Menu
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body px-0">
+                <nav class="nav-drawer d-flex flex-column mt-2">
+                    <a href="http://localhost:9001/ocr" class="nav-link active">
+                        <i class="fa-solid fa-hard-drive"></i> OCR Studio
+                    </a>
+                    <a href="http://localhost:9001/ocr/ai" class="nav-link">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> AI Converter
+                    </a>
+                    <a href="http://localhost:9001/ocr/ai/history" class="nav-link">
+                        <i class="fa-regular fa-clock"></i> Ai History Excel
+                    </a>
+                    <a href="http://localhost:9001/api/stt/file" class="nav-link">
+                        <i class="fa-solid fa-microphone-lines"></i> [STT] Voice to Text
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <main class="col-12 col-lg-10 p-3 p-lg-4">
+            <div class="row g-4 h-100">
+
+                <section class="col-12 col-xl-5">
+                    <div class="material-card d-flex flex-column gap-3">
+                        <div>
+                            <h2 class="h5 fw-bold mb-1">파일 업로드</h2>
+                            <p class="text-muted small">JPG / PNG / PDF에서 텍스트를 추출합니다.</p>
+                        </div>
+
+                        <form id="ocrUploadForm" th:action="@{/ocr/upload}" method="post" enctype="multipart/form-data">
+                            <div class="upload-wrapper p-4 text-center mb-3">
+                                <i class="fa-solid fa-cloud-arrow-up text-primary fa-3x mb-3"></i>
+                                <p class="small text-muted mb-3">여기에 파일을 드래그하거나 클릭하여 선택하세요.</p>
+
+                                <input class="form-control" type="file" id="fileInput" name="file" accept="image/*,application/pdf" style="max-width: 80%; margin: 0 auto;">
+
+                                <div class="mt-2 small fw-bold text-primary" id="fileInfoText"></div>
+                            </div>
+
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-m3 btn-m3-primary shadow-sm">
+                                    <i class="fa-solid fa-bolt"></i> OCR 텍스트 추출 실행
+                                </button>
+                            </div>
+                        </form>
+
+                        <div th:if="${errorMessage}" class="alert alert-danger rounded-4 border-0 bg-danger-subtle text-danger small">
+                            <i class="fa-solid fa-triangle-exclamation me-2"></i><span th:text="${errorMessage}">Error</span>
+                        </div>
+                        <div th:if="${infoMessage}" class="alert alert-primary rounded-4 border-0 bg-primary-subtle text-primary small">
+                            <i class="fa-solid fa-circle-info me-2"></i><span th:text="${infoMessage}">Info</span>
+                        </div>
+
+                        <div class="flex-grow-1 d-flex flex-column mt-2">
+                            <label class="small fw-bold text-muted mb-2 ps-1">PREVIEW</label>
+                            <div class="preview-box flex-grow-1 position-relative">
+                                <img id="imagePreview" src="" alt="Preview" class="img-fluid d-none" style="max-height: 280px;">
+                                <embed id="pdfPreview" type="application/pdf" src="" class="w-100 h-100 d-none" style="min-height: 280px;">
+
+                                <div id="previewPlaceholder" class="text-center text-muted opacity-50">
+                                    <i class="fa-regular fa-image fa-3x mb-2"></i>
+                                    <p class="small m-0">파일이 선택되지 않았습니다</p>
+                                </div>
+                            </div>
+                            <div class="text-end mt-2 small text-muted" th:if="${ocrResult != null}">
+                                <span th:if="${ocrResult.fileType == 'PDF'}">PDF · <span th:text="${ocrResult.pageCount}">0</span> Pages</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="col-12 col-xl-7">
+                    <div class="material-card">
+                        <form id="ocrSaveForm" th:action="@{/ocr/save}" method="post" class="d-flex flex-column h-100 gap-3">
+
+
+                            <!-- ✅ 현재 작업 중 파일 (Material Design 3 스타일 헤더) -->
+                            <div class="d-flex align-items-center justify-content-between px-3 py-2 rounded-3 border bg-body-tertiary mb-2">
+                                <!-- 왼쪽: 파일 아이콘 + 파일명 -->
+                                <div class="d-flex align-items-center gap-2">
+                                    <!-- 라벨 & 상태 아이콘 -->
+                                    <div class="d-flex flex-column">
+                                        <span class="text-uppercase text-muted small fw-semibold">
+                                            현재 작업 중 파일
+                                        </span>
+                                        <span class="fw-semibold text-truncate" style="max-width: 260px;">
+                                            <i class="fa-regular fa-file-lines me-1 text-secondary"></i>
+                                            <span th:if="${ocrResult != null}"
+                                                  th:text="${ocrResult.originalFileName}">sample.pdf</span>
+                                            <span th:if="${ocrResult == null}">파일이 선택되지 않았습니다</span>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- 오른쪽: 상태 배지 -->
+                                <div class="d-flex align-items-center gap-2">
+                                    <span th:if="${ocrResult != null}"
+                                          class="badge rounded-pill bg-success-subtle text-success small border border-success-subtle">
+                                        <i class="fa-solid fa-circle-check me-1"></i> OCR 완료
+                                    </span>
+                                    <span th:if="${ocrResult == null}"
+                                          class="badge rounded-pill bg-secondary-subtle text-secondary small border border-secondary-subtle">
+                                    <i class="fa-solid fa-cloud-arrow-up me-1"></i> 대기 중
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- 제목 입력 영역 (기존 그대로 유지) -->
+                            <div class="border-bottom pb-2">
+                                <input type="text" id="ocrTitle" name="title"
+                                       class="form-control border-0 fs-4 px-0 fw-normal"
+                                       placeholder="제목 없는 문서"
+                                       th:value="${ocrResult != null} ? ${ocrResult.title} : ''"
+                                       style="box-shadow: none; background: transparent;">
+                            </div>
+
+
+                            <div class="d-flex flex-wrap align-items-center gap-2 bg-light p-2 rounded-3">
+                                <span class="badge bg-white text-dark border">번역 설정</span>
+
+                                <select class="form-select form-select-sm border-0" id="translateDirection" style="width: auto; background-color: transparent;">
+                                    <option value="KO_EN">한국어 → 영어</option>
+                                    <option value="EN_KO">영어 → 한국어</option>
+                                </select>
+
+                                <div class="vr mx-1"></div>
+
+                                <select class="form-select form-select-sm border-0" id="translateLevel" style="width: auto; background-color: transparent;">
+                                    <option value="BASIC">Basic</option>
+                                    <option value="PREMIUM" selected>Premium</option>
+                                    <option value="ECONOMY">Economy</option>
+                                </select>
+
+                                <button type="button" class="btn btn-sm btn-light border ms-auto text-primary fw-bold" id="translateBtn">
+                                    <i class="fa-solid fa-language me-1"></i> 번역하기
+                                </button>
+                            </div>
+
+                            <div class="row g-3 flex-grow-1">
+                                <div class="col-md-6 d-flex flex-column">
+                                    <label class="small text-muted fw-bold mb-2">원본 텍스트 (OCR)</label>
+                                    <textarea id="ocrText" name="ocrText" class="form-control doc-editor flex-grow-1 shadow-sm"
+                                              placeholder="추출된 텍스트가 여기에 표시됩니다..."
+                                              th:text="${ocrResult != null} ? ${ocrResult.ocrText} : ''"></textarea>
+                                </div>
+
+                                <div class="col-md-6 d-flex flex-column">
+                                    <label class="small text-muted fw-bold mb-2">번역 결과</label>
+                                    <textarea id="translatedText" class="form-control doc-editor flex-grow-1 shadow-sm"
+                                              style="background-color: #f8fbf8;"
+                                              placeholder="번역 결과가 표시됩니다."
+                                              th:text="${translation != null} ? ${translation.translatedText} : ''" readonly></textarea>
+
+                                    <div class="text-end small text-muted mt-1 fst-italic" id="translateMetaInfo"
+                                         th:text="${translation != null} ? ${translation.sourceLang} + ' → ' + ${translation.targetLang} : ''"></div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center pt-2">
+                                    <span class="small text-muted">
+                                        <i class="fa-solid fa-check-double me-1"></i> 모든 변경사항이 아직 저장되지 않았습니다.
+                                    </span>
+
+                                <!-- ✅ 저장 모드 분기: OCR만 / 번역만 -->
+                                <div class="btn-group">
+                                    <!-- 1) OCR만 저장 -->
+                                    <button type="submit"
+                                            class="btn btn-m3 btn-outline-primary shadow-sm"
+                                            name="saveMode"
+                                            value="OCR_ONLY">
+                                        <i class="fa-regular fa-floppy-disk me-1"></i> OCR만 저장
+                                    </button>
+
+                                    <!-- 2) 번역만 저장 -->
+                                    <button type="submit"
+                                            class="btn btn-m3 btn-m3-primary shadow"
+                                            name="saveMode"
+                                            value="TRANSLATION_ONLY">
+                                        <i class="fa-solid fa-language me-1"></i> 번역만 저장
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // 1. 파일 미리보기 로직
+    const fileInput = document.getElementById('fileInput');
+    const fileInfoText = document.getElementById('fileInfoText');
+    const imagePreview = document.getElementById('imagePreview');
+    const pdfPreview = document.getElementById('pdfPreview');
+    const previewPlaceholder = document.getElementById('previewPlaceholder');
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function (event) {
+            const file = event.target.files && event.target.files[0];
+
+            if (!file) {
+                fileInfoText.textContent = '';
+                imagePreview.classList.add('d-none');
+                pdfPreview.classList.add('d-none');
+                previewPlaceholder.classList.remove('d-none');
+                imagePreview.src = '';
+                pdfPreview.src = '';
+                return;
+            }
+
+            fileInfoText.textContent = `${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+            const objectUrl = URL.createObjectURL(file);
+
+            if (file.type.startsWith('image/')) {
+                imagePreview.src = objectUrl;
+                imagePreview.classList.remove('d-none');
+                pdfPreview.src = '';
+                pdfPreview.classList.add('d-none');
+                previewPlaceholder.classList.add('d-none');
+            } else if (file.type === 'application/pdf') {
+                pdfPreview.src = objectUrl;
+                pdfPreview.classList.remove('d-none');
+                imagePreview.src = '';
+                imagePreview.classList.add('d-none');
+                previewPlaceholder.classList.add('d-none');
+            } else {
+                // 지원하지 않는 형식
+                imagePreview.src = '';
+                pdfPreview.src = '';
+                imagePreview.classList.add('d-none');
+                pdfPreview.classList.add('d-none');
+                previewPlaceholder.classList.remove('d-none');
+            }
+        });
+    }
+
+    // 3. 번역 API 연동 로직
+    const ocrTextArea = document.getElementById('ocrText');
+    const translateBtn = document.getElementById('translateBtn');
+    const translateDirectionSelect = document.getElementById('translateDirection');
+    const translateLevelSelect = document.getElementById('translateLevel');
+    const translatedTextArea = document.getElementById('translatedText');
+    const translateMetaInfo = document.getElementById('translateMetaInfo');
+
+    if (translateBtn) {
+        translateBtn.addEventListener('click', async function () {
+            const sourceRaw = ocrTextArea ? ocrTextArea.value.trim() : '';
+
+            if (!sourceRaw) {
+                alert('번역할 텍스트가 없습니다.');
+                return;
+            }
+
+            const direction = translateDirectionSelect ? translateDirectionSelect.value : 'KO_EN';
+            let sourceLang = 'ko';
+            let targetLang = 'en';
+
+            if (direction === 'EN_KO') {
+                sourceLang = 'en';
+                targetLang = 'ko';
+            }
+
+            const level = translateLevelSelect ? translateLevelSelect.value : 'BASIC';
+
+            // 로딩 표시
+            const originalBtnText = translateBtn.innerHTML;
+            translateBtn.disabled = true;
+            translateBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> 처리중';
+
+            try {
+                const params = new URLSearchParams();
+                params.append('sourceText', sourceRaw);
+                params.append('sourceLang', sourceLang);
+                params.append('targetLang', targetLang);
+                params.append('level', level);
+
+                const response = await fetch('/api/translation/ocr', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                    },
+                    body: params.toString()
+                });
+
+                if (!response.ok) {
+                    alert('서버 통신 오류가 발생했습니다.');
                     return;
                 }
 
-                fileInfoText.textContent = `${file.name} (${(file.size/1024).toFixed(1)} KB)`;
-                const objectUrl = URL.createObjectURL(file);
+                const data = await response.json();
 
-                if (file.type.startsWith('image/')) {
-                    imagePreview.src = objectUrl;
-                    imagePreview.classList.remove('d-none');
-                    pdfPreview.src = '';
-                    pdfPreview.classList.add('d-none');
-                    previewPlaceholder.classList.add('d-none');
-                } else if (file.type === 'application/pdf') {
-                    pdfPreview.src = objectUrl;
-                    pdfPreview.classList.remove('d-none');
-                    imagePreview.src = '';
-                    imagePreview.classList.add('d-none');
-                    previewPlaceholder.classList.add('d-none');
-                } else {
-                    // 지원하지 않는 형식
-                    imagePreview.src = '';
-                    pdfPreview.src = '';
-                    imagePreview.classList.add('d-none');
-                    pdfPreview.classList.add('d-none');
-                    previewPlaceholder.classList.remove('d-none');
-                }
-            });
-        }
-
-        // 2. 모바일 사이드바 토글 (Bootstrap Offcanvas 사용으로 JS 불필요)
-        // 기존의 alert 코드는 삭제되었습니다.
-
-        // 3. 번역 API 연동 로직
-        const ocrTextArea = document.getElementById('ocrText');
-        const translateBtn = document.getElementById('translateBtn');
-        const translateDirectionSelect = document.getElementById('translateDirection');
-        const translateLevelSelect = document.getElementById('translateLevel');
-        const translatedTextArea = document.getElementById('translatedText');
-        const translateMetaInfo = document.getElementById('translateMetaInfo');
-
-        if (translateBtn) {
-            translateBtn.addEventListener('click', async function () {
-                const sourceRaw = ocrTextArea ? ocrTextArea.value.trim() : '';
-
-                if (!sourceRaw) {
-                    alert('번역할 텍스트가 없습니다.');
-                    return;
+                if (translatedTextArea) {
+                    translatedTextArea.value = data.translatedText || '';
                 }
 
-                const direction = translateDirectionSelect ? translateDirectionSelect.value : 'KO_EN';
-                let sourceLang = 'ko';
-                let targetLang = 'en';
-
-                if (direction === 'EN_KO') {
-                    sourceLang = 'en';
-                    targetLang = 'ko';
+                if (translateMetaInfo) {
+                    const src = data.sourceLang || sourceLang;
+                    const tgt = data.targetLang || targetLang;
+                    translateMetaInfo.textContent = `${src} → ${tgt} (Engine: ${data.engine || 'AI'})`;
                 }
 
-                const level = translateLevelSelect ? translateLevelSelect.value : 'BASIC';
-
-                // 로딩 표시
-                const originalBtnText = translateBtn.innerHTML;
-                translateBtn.disabled = true;
-                translateBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> 처리중';
-
-                try {
-                    const params = new URLSearchParams();
-                    params.append('sourceText', sourceRaw);
-                    params.append('sourceLang', sourceLang);
-                    params.append('targetLang', targetLang);
-                    params.append('level', level);
-
-                    const response = await fetch('/api/translation/ocr', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-                        },
-                        body: params.toString()
-                    });
-
-                    if (!response.ok) {
-                        alert('서버 통신 오류가 발생했습니다.');
-                        return;
-                    }
-
-                    const data = await response.json();
-
-                    if (translatedTextArea) {
-                        translatedTextArea.value = data.translatedText || '';
-                    }
-
-                    if (translateMetaInfo) {
-                        const src = data.sourceLang || sourceLang;
-                        const tgt = data.targetLang || targetLang;
-                        translateMetaInfo.textContent = `${src} → ${tgt} (Engine: ${data.engine || 'AI'})`;
-                    }
-
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('번역 중 오류가 발생했습니다.');
-                } finally {
-                    translateBtn.disabled = false;
-                    translateBtn.innerHTML = originalBtnText;
-                }
-            });
-        }
-    </script>
+            } catch (error) {
+                console.error('Error:', error);
+                alert('번역 중 오류가 발생했습니다.');
+            } finally {
+                translateBtn.disabled = false;
+                translateBtn.innerHTML = originalBtnText;
+            }
+        });
+    }
+</script>
 </body>
+
 </html>
