@@ -145,7 +145,8 @@ https://github.com/user-attachments/assets/64e37fe6-0903-46f8-b59e-f74d01f9dce0
 - 📄 엑셀 옵션 DTO, ExcelService 설계, 체크박스 + 모달 연동 흐름:  
 > 📊 [Excel History Module](./docs/excel-history-module.md)
 
-https://github.com/user-attachments/assets/fbb0e71d-fd33-49fa-bad8-8624e0212d90
+
+https://github.com/user-attachments/assets/1b702c1d-dd5c-488d-8951-8ae19a0dd6e8
 
 
 [![Excel_히스토리_모듈_상세보기](https://img.shields.io/badge/Excel_히스토리_모듈_상세보기-2196F3?style=for-the-badge&logo=microsoft-excel&logoColor=white)](docs/excel-history-module.md)
