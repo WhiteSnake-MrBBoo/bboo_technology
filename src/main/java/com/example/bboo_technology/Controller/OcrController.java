@@ -105,7 +105,7 @@ public class OcrController {
 
         // 뷰 파일: templates/ocr/ocr_console.html
 //        return "ocr/ocr_console";
-        return "ocr/ocr_mstyle";
+        return "ocr/ocr_drstyle";
     }
 
     /**
@@ -155,7 +155,7 @@ public class OcrController {
 
         // 업로드 & OCR 완료 후에도 같은 화면(ocr_console.html)을 재사용
 //        return "ocr/ocr_console";
-        return "ocr/ocr_mstyle";
+        return "ocr/ocr_drstyle";
     }
 
     /**
@@ -169,16 +169,17 @@ public class OcrController {
      *   4) 저장 성공 시 세션의 임시 데이터 제거(선택), 성공 메시지 반환
      */
 
+    /*버튼 2개 : 1. ocr만 저장 2. 번역만 저장 */
     @PostMapping("/save")
     public String saveOcrResult(@RequestParam("title") String title,
                                 @RequestParam("ocrText") String ocrText,
+                                @RequestParam(name = "saveMode", defaultValue = "OCR_ONLY") String saveMode,
                                 HttpSession session,
                                 RedirectAttributes redirectAttributes) {
 
-        // 1. 세션에서 OCR_RESULT 가져오기
+        // 1. 세션에서 OCR_RESULT 가져오기 (메타 정보용)
         Object sessionObj = session.getAttribute(SESSION_KEY_OCR_RESULT);
         if (!(sessionObj instanceof OcrResultDto ocrResultDto)) {
-            // 세션 만료 또는 잘못된 접근
             redirectAttributes.addFlashAttribute(
                     "errorMessage",
                     "세션 정보가 만료되었거나 잘못된 접근입니다. 다시 파일을 업로드해 주세요."
@@ -186,76 +187,200 @@ public class OcrController {
             return "redirect:/ocr";
         }
 
-        // 1-1. (선택) 세션에서 번역 결과도 가져오기
-        //      - 번역이 아직 안 되었으면 null 이어도 상관 없음
+        // 1-1. 세션에서 번역 결과도 가져오기 (번역 저장 모드에서 사용)
         Object transObj = session.getAttribute(SESSION_KEY_OCR_TRANSLATION);
-        TranslationDto translationDto = null;
-        if (transObj instanceof TranslationDto t) {
-            translationDto = t;
-        }
+        TranslationDto translationDto = (transObj instanceof TranslationDto t) ? t : null;
 
-        // 2. 제목/텍스트 검증
+        // 2. 공통: 제목 검증
         String trimmedTitle = (title != null) ? title.trim() : "";
-        String trimmedOcrText = (ocrText != null) ? ocrText.trim() : "";
-
         if (trimmedTitle.isEmpty()) {
             redirectAttributes.addFlashAttribute("errorMessage", "저장할 제목을 입력해 주세요.");
-            // ❗ 검증 실패 시 세션은 건드리지 않는다 → OCR/번역 내용 그대로 유지
-            return "redirect:/ocr";
+            return "redirect:/ocr"; // 세션은 그대로 유지
         }
 
-        if (trimmedOcrText.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "저장할 텍스트 내용이 비어 있습니다.");
-            // ❗ 검증 실패 시 세션은 건드리지 않는다
-            return "redirect:/ocr";
+        // 3. 모드별 분기
+        boolean isOcrOnly = "OCR_ONLY".equalsIgnoreCase(saveMode);
+        boolean isTranslationOnly = "TRANSLATION_ONLY".equalsIgnoreCase(saveMode);
+
+        if (!isOcrOnly && !isTranslationOnly) {
+            // 예상치 못한 값이 들어온 경우 안전하게 OCR_ONLY로 처리
+            isOcrOnly = true;
         }
 
-        // 3. 세션 OCR DTO 업데이트 (사용자 입력 반영)
-        ocrResultDto.setTitle(trimmedTitle);
-        ocrResultDto.setEditedText(trimmedOcrText);
-
+        //todo: 추후에 번역 DB만 분활 ocr_result 테이블에 참조로 붙일지 결정 하기 ???
         try {
-            // 4. OCR 결과 DB 저장
-            //    - 기존에 사용하던 서비스 로직 그대로
-            ocrResultService.saveOcrResult(ocrResultDto);
+            if (isOcrOnly) {
+                // ==============================
+                // 3-1. OCR만 저장
+                // ==============================
 
-            // 4-1. (향후용) 번역 결과 처리 자리
-            //      - 지금은 번역 테이블/엔티티를 아직 결정하지 않았으므로
-            //        단순히 로그만 남기고, 나중에 TranslationEntity 만들면
-            //        이 위치에서 TranslationService.save(...) 호출만 추가하면 된다.
-            if (translationDto != null) {
-                log.info("번역 세션 데이터 감지 - 향후 Translation DB 저장 시 사용 예정. sourceLang={}, targetLang={}, engine={}",
-                        translationDto.getSourceLang(),
-                        translationDto.getTargetLang(),
-                        translationDto.getEngine()
-                );
+                String trimmedOcrText = (ocrText != null) ? ocrText.trim() : "";
+                if (trimmedOcrText.isEmpty()) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "저장할 텍스트 내용이 비어 있습니다.");
+                    return "redirect:/ocr";
+                }
 
-                // TODO:
-                //  - TranslationEntity / TranslationService 설계가 결정되면
-                //    아래와 같은 형태로 OCR 결과와 함께 저장을 수행한다.
-                //    translationService.saveTranslation(ocrResultDto, translationDto);
+                // 세션 DTO에 사용자 입력 반영
+                ocrResultDto.setTitle(trimmedTitle);
+                ocrResultDto.setEditedText(trimmedOcrText);
+                // (테스트 단계) OCR만 저장 모드에서는 번역 필드는 비워둔다.
+                ocrResultDto.setTranslatedText(null);
+
+                // DB 저장
+                ocrResultService.saveOcrResult(ocrResultDto);
+
+                ocrResultDto.setSaved(true);
+
+                // OCR만 저장 후에도, 이번 작업을 마무리한다고 가정하고 세션 정리
+//                session.removeAttribute(SESSION_KEY_OCR_RESULT);
+//                session.removeAttribute(SESSION_KEY_OCR_TRANSLATION);
+
+                redirectAttributes.addFlashAttribute("infoMessage", "OCR 결과가 성공적으로 저장되었습니다.");
+
+            } else if (isTranslationOnly) {
+                // ==============================
+                // 3-2. 번역만 저장
+                // ==============================
+
+                if (translationDto == null || translationDto.getTranslatedText() == null
+                        || translationDto.getTranslatedText().trim().isEmpty()) {
+                    redirectAttributes.addFlashAttribute(
+                            "errorMessage",
+                            "저장할 번역 결과가 없습니다. 먼저 번역을 실행해 주세요."
+                    );
+                    return "redirect:/ocr";
+                }
+
+                String translatedText = translationDto.getTranslatedText().trim();
+
+                // 번역만 저장할 별도의 OcrResultDto 생성
+                //  - 같은 ocr_result 테이블에 "번역 전용 레코드"로 넣기 위한 테스트용 구조
+                OcrResultDto translationSaveDto = OcrResultDto.builder()
+                        .id(null) // 새 레코드 insert
+                        .originalFileName(ocrResultDto.getOriginalFileName())
+                        .fileType(ocrResultDto.getFileType())
+                        .pageCount(ocrResultDto.getPageCount())
+                        // 제목은 그대로 쓰거나, 구분이 필요하면 접두어를 붙여도 됨
+                        .title(trimmedTitle)  // 예: "[번역]" + trimmedTitle 도 가능
+                        // 번역 텍스트를 ocrText/editedText 에 넣어서 저장 (테스트 단계)
+                        .ocrText(translatedText)
+                        .editedText(translatedText)
+                        .translatedText(null)  // 나중에 TranslationEntity로 분리할 예정이므로 여기선 null
+                        .createdAt(null)      // 서비스/엔티티 단에서 처리한다면 null로 둬도 됨
+                        .updatedAt(null)
+                        .saved(true)
+                        .build();
+
+                // DB 저장 (같은 ocr_result 테이블에 "번역 레코드"로 저장)
+                ocrResultService.saveOcrResult(translationSaveDto);
+
+                // 번역만 저장 후에도, 이번 작업을 마무리한다고 보고 세션 정리
+//                session.removeAttribute(SESSION_KEY_OCR_RESULT);
+//                session.removeAttribute(SESSION_KEY_OCR_TRANSLATION);
+
+                redirectAttributes.addFlashAttribute("infoMessage", "번역 결과가 성공적으로 저장되었습니다.");
             }
 
-            // 5. 저장 완료 플래그
-            ocrResultDto.setSaved(true);
-
-            // 6. 저장 "성공" 시에만 세션 정리
-            session.removeAttribute(SESSION_KEY_OCR_RESULT);
-            session.removeAttribute(SESSION_KEY_OCR_TRANSLATION);
-
-            redirectAttributes.addFlashAttribute("infoMessage", "OCR 결과가 성공적으로 저장되었습니다.");
-
         } catch (Exception e) {
-            log.error("OCR 결과 저장 중 오류 발생", e);
-            // ❗ 예외 발생 시에도 세션은 그대로 유지 → 사용자가 작성한 내용/번역 보존
+            log.error("OCR/번역 결과 저장 중 오류 발생", e);
+            // 예외 시 세션은 그대로 유지 → 다시 /ocr 들어가면 작업 내용/번역 내용 유지
             redirectAttributes.addFlashAttribute(
                     "errorMessage",
-                    "OCR 결과 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+                    "저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
             );
         }
 
         return "redirect:/ocr";
     }
+
+
+//    @PostMapping("/save")
+//    public String saveOcrResult(@RequestParam("title") String title,
+//                                @RequestParam("ocrText") String ocrText,
+//                                HttpSession session,
+//                                RedirectAttributes redirectAttributes) {
+//
+//        // 1. 세션에서 OCR_RESULT 가져오기
+//        Object sessionObj = session.getAttribute(SESSION_KEY_OCR_RESULT);
+//        if (!(sessionObj instanceof OcrResultDto ocrResultDto)) {
+//            // 세션 만료 또는 잘못된 접근
+//            redirectAttributes.addFlashAttribute(
+//                    "errorMessage",
+//                    "세션 정보가 만료되었거나 잘못된 접근입니다. 다시 파일을 업로드해 주세요."
+//            );
+//            return "redirect:/ocr";
+//        }
+//
+//        // 1-1. (선택) 세션에서 번역 결과도 가져오기
+//        //      - 번역이 아직 안 되었으면 null 이어도 상관 없음
+//        Object transObj = session.getAttribute(SESSION_KEY_OCR_TRANSLATION);
+//        TranslationDto translationDto = null;
+//        if (transObj instanceof TranslationDto t) {
+//            translationDto = t;
+//        }
+//
+//        // 2. 제목/텍스트 검증
+//        String trimmedTitle = (title != null) ? title.trim() : "";
+//        String trimmedOcrText = (ocrText != null) ? ocrText.trim() : "";
+//
+//        if (trimmedTitle.isEmpty()) {
+//            redirectAttributes.addFlashAttribute("errorMessage", "저장할 제목을 입력해 주세요.");
+//            // ❗ 검증 실패 시 세션은 건드리지 않는다 → OCR/번역 내용 그대로 유지
+//            return "redirect:/ocr";
+//        }
+//
+//        if (trimmedOcrText.isEmpty()) {
+//            redirectAttributes.addFlashAttribute("errorMessage", "저장할 텍스트 내용이 비어 있습니다.");
+//            // ❗ 검증 실패 시 세션은 건드리지 않는다
+//            return "redirect:/ocr";
+//        }
+//
+//        // 3. 세션 OCR DTO 업데이트 (사용자 입력 반영)
+//        ocrResultDto.setTitle(trimmedTitle);
+//        ocrResultDto.setEditedText(trimmedOcrText);
+//
+//        try {
+//            // 4. OCR 결과 DB 저장
+//            //    - 기존에 사용하던 서비스 로직 그대로
+//            ocrResultService.saveOcrResult(ocrResultDto);
+//
+//            // 4-1. (향후용) 번역 결과 처리 자리
+//            //      - 지금은 번역 테이블/엔티티를 아직 결정하지 않았으므로
+//            //        단순히 로그만 남기고, 나중에 TranslationEntity 만들면
+//            //        이 위치에서 TranslationService.save(...) 호출만 추가하면 된다.
+//            if (translationDto != null) {
+//                log.info("번역 세션 데이터 감지 - 향후 Translation DB 저장 시 사용 예정. sourceLang={}, targetLang={}, engine={}",
+//                        translationDto.getSourceLang(),
+//                        translationDto.getTargetLang(),
+//                        translationDto.getEngine()
+//                );
+//
+//                // TODO:
+//                //  - TranslationEntity / TranslationService 설계가 결정되면
+//                //    아래와 같은 형태로 OCR 결과와 함께 저장을 수행한다.
+//                //    translationService.saveTranslation(ocrResultDto, translationDto);
+//            }
+//
+//            // 5. 저장 완료 플래그
+//            ocrResultDto.setSaved(true);
+//
+//            // 6. 저장 "성공" 시에만 세션 정리
+//            session.removeAttribute(SESSION_KEY_OCR_RESULT);
+//            session.removeAttribute(SESSION_KEY_OCR_TRANSLATION);
+//
+//            redirectAttributes.addFlashAttribute("infoMessage", "OCR 결과가 성공적으로 저장되었습니다.");
+//
+//        } catch (Exception e) {
+//            log.error("OCR 결과 저장 중 오류 발생", e);
+//            // ❗ 예외 발생 시에도 세션은 그대로 유지 → 사용자가 작성한 내용/번역 보존
+//            redirectAttributes.addFlashAttribute(
+//                    "errorMessage",
+//                    "OCR 결과 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+//            );
+//        }
+//
+//        return "redirect:/ocr";
+//    }
 
 
     /**
@@ -328,7 +453,8 @@ public class OcrController {
         // 뷰 파일: templates/ocr/ocr_ai.html
 //        return "ocr/ocr_ai";
 //        return "ocr/gpt_google01";
-        return "ocr/ocr_ai_goostyle";
+//        return "ocr/ocr_ai_goostyle";
+        return "ocr/ocr_ai_goostyle_side";
     }
 
     // ========== 6) OCR AI 활용 - 더미 요약/멘트/마케팅 엔드포인트 ==========
