@@ -433,6 +433,10 @@ public class OcrController {
         var ocrList = ocrResultService.findAll();
         model.addAttribute("ocrList", ocrList);
 
+        /** Controller 에서 조회 사이드 사용
+         * 별도 service 로직을 만들지 않고
+         * controller 에서 임시로 repository 조회용 PK 사용
+        * */
         // 2. 우측 패널에 표시할 "선택된 문서" 결정 : 초기값 설정
         OcrResultDto selected = null;
 
