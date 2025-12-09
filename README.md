@@ -88,7 +88,7 @@ https://github.com/user-attachments/assets/ce36ba50-f471-4911-8ef6-831a1800e233
 
 **AI 활용 설계 포인트**
 
-- **AI 모델 역할 분리(application.yml 기반)**  
+- ** AI 모델 역할 분리(application.yml 기반 / Tokken 비용 절감) **  
   - `summary`, `hostScript`, `marketingPoints` 용도를 분리해서  
     동일 프로젝트 안에서도 **역할별로 다른 모델/파라미터** 사용 가능  
   - 예)  
@@ -96,7 +96,7 @@ https://github.com/user-attachments/assets/ce36ba50-f471-4911-8ef6-831a1800e233
     - 품질이 중요한 쇼호스트 멘트 → 필요 시 `gpt-4.x / gpt-5.x` AI MODEL 변경 가능  
   - 설정만 바꿔도 라인업 변경이 가능해, **비용·품질 트레이드오프를 운영 단계에서 조정**할 수 있음
 
-- **토큰 비용 절감 구조(Usage 로깅 + 재사용)**  
+- ** Tokken 구조 명시 (Usage 로깅 + 재사용) **  
   - OpenAI 응답의 `prompt_tokens / completion_tokens / total_tokens`를  
     `OcrGptResult`에 함께 저장하고, 히스토리/엑셀에서 조회 가능하게 설계  
   - 이를 통해:
@@ -119,7 +119,7 @@ https://github.com/user-attachments/assets/ce36ba50-f471-4911-8ef6-831a1800e233
   - 코드 수정 없이 **설정만으로 모델 교체·튜닝·비용 정책 변경**이 가능해  
     운영 환경에서 안전하게 실험/조정 가능
 
-- **공통 GPT 서비스 계층**  
+- **공통 AI 서비스 계층**  
   - `OcrAiGptService`에서 WebClient 호출 로직을 공통화하고,  
     각 모드(SUMMARY / HOST_SCRIPT / MARKETING_POINTS)는  
     **프롬프트만 다르게 주입**하는 구조로 구현  
