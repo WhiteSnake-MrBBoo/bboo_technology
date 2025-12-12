@@ -467,3 +467,51 @@ UNSUPPORTED_AUDIO_FORMAT 에러로 사용자에게 안내하는 방식으로 확
 - WebSocket 기반 실시간 STT + LLM 후처리
 - STT 히스토리 DB 저장 및 관리 화면 추가
 
+
+<details>
+  <summary>JAVA 코드 웹/API 응답용 래퍼 DTO</summary>
+
+
+  ```java
+// (추가) 웹/API 응답용 래퍼 DTO
+@Getter
+@Builder
+public class SttWebResponse {
+
+    private final SttResponseDto body;   // 실제 응답 데이터
+    private final HttpStatus httpStatus; // HTTP 상태 코드
+
+}
+  ```
+</details>
+<details>
+  <summary>JAVA 코드 웹/API 응답용 래퍼 DTO</summary>
+
+  ```java
+// (추가) STT 엔진에 전달할 요청 DTO
+@Getter
+@Builder
+public class SttRequest {
+
+    // 방송/세션 구분용 (없으면 null 가능)
+    private final String sessionId;
+
+    // 언어 힌트 (null이면 auto-detect)
+    private final String languageHint;
+
+    // 원본 파일 이름
+    private final String fileName;
+
+    // 파일 크기(bytes)
+    private final Long fileSize;
+
+    // 실제 오디오 데이터
+    private final byte[] audioData;
+
+    // 추가 메타 정보 (옵션)
+    private final Map<String, Object> meta;
+}
+  ```
+
+</details>
+

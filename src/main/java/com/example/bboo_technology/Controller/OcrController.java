@@ -14,6 +14,7 @@ import com.example.bboo_technology.Service.Ocrservice.OcrResultService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 
 /*Model 임포트는 무조건 이거 써야함 - Spring MVC에서 Controller → View(Thymeleaf 등) 로 데이터 넘길 때 쓰는 그 Model*/
@@ -82,10 +83,15 @@ public class OcrController {
      * - 세션에 이미 진행 중인 OCR 작업(OcrResultDto)이 있다면 Model 에 올려서 View 에서 그대로 렌더링한다.
      * (예: 새로고침 또는 다른 페이지 다녀온 경우에도 작업 상태 유지)
      */
+    @Value("${app.base-url}")
+    private String baseUrl;
+
     @GetMapping("/ppp")
     public String ppal() {
-        return "ocr/ocr_mstyle"; // templates/ocr/ppublic_global.html
+        System.out.println("현재 BASE URL = " + baseUrl);
+        return "ocr/ocr_mstyle";
     }
+
 
 
     @GetMapping
@@ -433,6 +439,10 @@ public class OcrController {
         var ocrList = ocrResultService.findAll();
         model.addAttribute("ocrList", ocrList);
 
+        /** Controller 에서 조회 사이드 사용
+         * 별도 service 로직을 만들지 않고
+         * controller 에서 임시로 repository 조회용 PK 사용
+        * */
         // 2. 우측 패널에 표시할 "선택된 문서" 결정 : 초기값 설정
         OcrResultDto selected = null;
 

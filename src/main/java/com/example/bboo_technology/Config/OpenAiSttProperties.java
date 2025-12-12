@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 // (추가) openai.stt.* 설정 바인딩용
+// @Value("{openai.stt.provider}")
 @Getter
 @Setter
 @Component
