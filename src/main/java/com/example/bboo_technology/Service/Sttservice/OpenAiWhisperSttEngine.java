@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -26,6 +27,7 @@ import java.time.Instant;
 //  - 기존 Stub 버전에서 OpenAI /audio/transcriptions 호출 로직으로 교체
 @Slf4j
 @Service
+@Primary //JAVA 테스트시에는 주석 해제 : 이거 파이썬에서 stt 받아 오는지 java 로컬 모델 쓸건지에 결정 사항 임
 @RequiredArgsConstructor
 public class OpenAiWhisperSttEngine implements SttEngine {
 

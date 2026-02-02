@@ -42,7 +42,7 @@ import static org.springframework.util.StringUtils.hasText;
  */
 @Slf4j
 @Service
-//@Primary // 테스트후 주석 풀기
+//@Primary // 파이썬 Fast api 모델 사용 여부 :: 테스트후 주석 풀기
 @RequiredArgsConstructor
 public class LocalPythonSttEngine implements SttEngine {
 
